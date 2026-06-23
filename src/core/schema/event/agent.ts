@@ -1,12 +1,6 @@
-import type {
-  AgentId,
-  AgentKind,
-  Department,
-  Role,
-} from "../../agents/schema/agent.schema";
-
-import type { TaskId } from "../../agents/schema/task.schema";
-import type { BaseEvent } from "./base-event";
+import type { AgentId, AgentKind, Department, Role } from "../agent.schema";
+import { TaskId } from "../task.schema";
+import { BaseEvent } from "./base-event";
 
 interface TaskDelegationRequestEvent extends BaseEvent {
   topic: "agent";

@@ -1,4 +1,4 @@
-import type { AgentId } from "../../agents/schema/agent.schema";
+import { AgentId } from "../agent.schema";
 
 export type EventId = `event_${number}`;
 export type ServiceId = `service_${string}`;

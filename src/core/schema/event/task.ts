@@ -3,7 +3,7 @@ import type {
   TaskCreate,
   TaskId,
   TaskStatus,
-} from "../../agents/schema/task.schema";
+} from "../task.schema";
 
 import type { BaseEvent } from "./base-event";
 

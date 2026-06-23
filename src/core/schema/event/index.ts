@@ -1,4 +1,4 @@
 import { AgentEvent } from "./agent";
 import { TaskEvent } from "./task";
 
-export type EventItem = AgentEvent | TaskEvent;
+export type Event = AgentEvent | TaskEvent;
