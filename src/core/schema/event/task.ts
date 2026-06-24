@@ -7,14 +7,14 @@ import type {
 
 import type { BaseEvent } from "./base-event";
 
-interface TaskCreateRequestEvent extends BaseEvent {
+export interface TaskCreateRequestEvent extends BaseEvent {
   topic: "task";
   type: "task_create_request";
 
   body: TaskCreate;
 }
 
-interface TaskCreateResponseEvent extends BaseEvent {
+export interface TaskCreateResponseEvent extends BaseEvent {
   topic: "task";
   type: "task_create_response";
 
@@ -25,7 +25,7 @@ interface TaskCreateResponseEvent extends BaseEvent {
   };
 }
 
-interface TaskUpdateRequestEvent extends BaseEvent {
+export interface TaskUpdateRequestEvent extends BaseEvent {
   topic: "task";
   type: "task_update_request";
 
@@ -35,7 +35,7 @@ interface TaskUpdateRequestEvent extends BaseEvent {
   };
 }
 
-interface TaskUpdateResponseEvent extends BaseEvent {
+export interface TaskUpdateResponseEvent extends BaseEvent {
   topic: "task";
   type: "task_update_response";
 
@@ -45,7 +45,7 @@ interface TaskUpdateResponseEvent extends BaseEvent {
   };
 }
 
-interface TaskTransitionRequestEvent extends BaseEvent {
+export interface TaskTransitionRequestEvent extends BaseEvent {
   topic: "task";
   type: "task_transition_request";
 
@@ -56,31 +56,12 @@ interface TaskTransitionRequestEvent extends BaseEvent {
   };
 }
 
-interface TaskTransitionResponseEvent extends BaseEvent {
+export interface TaskTransitionResponseEvent extends BaseEvent {
   topic: "task";
   type: "task_transition_response";
 
   body: {
     transitioned: boolean;
-    reason: string | null;
-  };
-}
-
-interface TaskDelegationRequestEvent extends BaseEvent {
-  topic: "task";
-  type: "task_delegation_request";
-
-  body: {
-    taskId: TaskId;
-  };
-}
-
-interface TaskDelegationResponseEvent extends BaseEvent {
-  topic: "task";
-  type: "task_delegation_response";
-
-  body: {
-    accepted: boolean;
     reason: string | null;
   };
 }
@@ -91,6 +72,4 @@ export type TaskEvent =
   | TaskUpdateRequestEvent
   | TaskUpdateResponseEvent
   | TaskTransitionRequestEvent
-  | TaskTransitionResponseEvent
-  | TaskDelegationRequestEvent
-  | TaskDelegationResponseEvent;
+  | TaskTransitionResponseEvent;

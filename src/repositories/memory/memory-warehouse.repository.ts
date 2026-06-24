@@ -8,6 +8,7 @@ import {
   TaskId,
   ClosedReason,
 } from "../../core/schema";
+import { ensureStorageFile } from "../utils";
 
 type MemoryWarehouseCreate = Omit<MemoryWarehouse, "id" | "createdAt">;
 
@@ -26,10 +27,13 @@ export class MemoryWarehouseRepository {
   static async create(
     file = "./storage/memory-warehouse.json",
   ): Promise<MemoryWarehouseRepository> {
-    const db = await JSONFilePreset<MemoryWarehouseDatabase>(file, {
-      counter: 0,
-      warehouse: [],
-    });
+    const db = await JSONFilePreset<MemoryWarehouseDatabase>(
+      await ensureStorageFile(file),
+      {
+        counter: 0,
+        warehouse: [],
+      },
+    );
 
     return new MemoryWarehouseRepository(db);
   }

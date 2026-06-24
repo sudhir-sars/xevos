@@ -1,8 +1,8 @@
-import type { AgentId, AgentKind, Department, Role } from "../agent.schema";
+import type { AgentId, AgentCreate } from "../agent.schema";
 import { TaskId } from "../task.schema";
 import { BaseEvent } from "./base-event";
 
-interface TaskDelegationRequestEvent extends BaseEvent {
+export interface TaskDelegationRequestEvent extends BaseEvent {
   topic: "agent";
   type: "task_delegation_request";
 
@@ -11,7 +11,7 @@ interface TaskDelegationRequestEvent extends BaseEvent {
   };
 }
 
-interface TaskDelegationResponseEvent extends BaseEvent {
+export interface TaskDelegationResponseEvent extends BaseEvent {
   topic: "agent";
   type: "task_delegation_response";
 
@@ -22,7 +22,7 @@ interface TaskDelegationResponseEvent extends BaseEvent {
   };
 }
 
-interface ApprovalRequestEvent extends BaseEvent {
+export interface ApprovalRequestEvent extends BaseEvent {
   topic: "agent";
   type: "approval_request";
 
@@ -32,7 +32,7 @@ interface ApprovalRequestEvent extends BaseEvent {
   };
 }
 
-interface ApprovalResponseEvent extends BaseEvent {
+export interface ApprovalResponseEvent extends BaseEvent {
   topic: "agent";
   type: "approval_response";
 
@@ -42,7 +42,7 @@ interface ApprovalResponseEvent extends BaseEvent {
   };
 }
 
-interface InformationRequestEvent extends BaseEvent {
+export interface InformationRequestEvent extends BaseEvent {
   topic: "agent";
   type: "information_request";
 
@@ -51,7 +51,7 @@ interface InformationRequestEvent extends BaseEvent {
   };
 }
 
-interface InformationResponseEvent extends BaseEvent {
+export interface InformationResponseEvent extends BaseEvent {
   topic: "agent";
   type: "information_response";
 
@@ -60,7 +60,7 @@ interface InformationResponseEvent extends BaseEvent {
   };
 }
 
-interface EscalationRequestEvent extends BaseEvent {
+export interface EscalationRequestEvent extends BaseEvent {
   topic: "agent";
   type: "escalation_request";
 
@@ -70,7 +70,7 @@ interface EscalationRequestEvent extends BaseEvent {
   };
 }
 
-interface EscalationResponseEvent extends BaseEvent {
+export interface EscalationResponseEvent extends BaseEvent {
   topic: "agent";
   type: "escalation_response";
 
@@ -80,7 +80,7 @@ interface EscalationResponseEvent extends BaseEvent {
   };
 }
 
-interface ReviewPresentationRequestEvent extends BaseEvent {
+export interface ReviewPresentationRequestEvent extends BaseEvent {
   topic: "agent";
   type: "review_presentation_request";
 
@@ -90,7 +90,7 @@ interface ReviewPresentationRequestEvent extends BaseEvent {
   };
 }
 
-interface ReviewPresentationResponseEvent extends BaseEvent {
+export interface ReviewPresentationResponseEvent extends BaseEvent {
   topic: "agent";
   type: "review_presentation_response";
 
@@ -100,7 +100,7 @@ interface ReviewPresentationResponseEvent extends BaseEvent {
   };
 }
 
-interface AgentMessageEvent extends BaseEvent {
+export interface AgentMessageEvent extends BaseEvent {
   topic: "agent";
   type: "message";
 
@@ -109,21 +109,14 @@ interface AgentMessageEvent extends BaseEvent {
   };
 }
 
-interface AgentCreationRequestEvent extends BaseEvent {
+export interface AgentCreationRequestEvent extends BaseEvent {
   topic: "agent";
   type: "agent_creation_request";
 
-  body: {
-    role: Role;
-    department: Department;
-    kind: AgentKind;
-
-    objective: string;
-    reason: string;
-  };
+  body: AgentCreate;
 }
 
-interface AgentCreationResponseEvent extends BaseEvent {
+export interface AgentCreationResponseEvent extends BaseEvent {
   topic: "agent";
   type: "agent_creation_response";
 
@@ -134,7 +127,7 @@ interface AgentCreationResponseEvent extends BaseEvent {
   };
 }
 
-interface AgentSuspensionRequestEvent extends BaseEvent {
+export interface AgentSuspensionRequestEvent extends BaseEvent {
   topic: "agent";
   type: "agent_suspension_request";
 
@@ -144,7 +137,7 @@ interface AgentSuspensionRequestEvent extends BaseEvent {
   };
 }
 
-interface AgentSuspensionResponseEvent extends BaseEvent {
+export interface AgentSuspensionResponseEvent extends BaseEvent {
   topic: "agent";
   type: "agent_suspension_response";
 
@@ -154,7 +147,7 @@ interface AgentSuspensionResponseEvent extends BaseEvent {
   };
 }
 
-interface AgentResumeRequestEvent extends BaseEvent {
+export interface AgentResumeRequestEvent extends BaseEvent {
   topic: "agent";
   type: "agent_resume_request";
 
@@ -163,7 +156,7 @@ interface AgentResumeRequestEvent extends BaseEvent {
   };
 }
 
-interface AgentResumeResponseEvent extends BaseEvent {
+export interface AgentResumeResponseEvent extends BaseEvent {
   topic: "agent";
   type: "agent_resume_response";
 
@@ -173,7 +166,7 @@ interface AgentResumeResponseEvent extends BaseEvent {
   };
 }
 
-interface AgentTerminationRequestEvent extends BaseEvent {
+export interface AgentTerminationRequestEvent extends BaseEvent {
   topic: "agent";
   type: "agent_termination_request";
 
@@ -183,7 +176,7 @@ interface AgentTerminationRequestEvent extends BaseEvent {
   };
 }
 
-interface AgentTerminationResponseEvent extends BaseEvent {
+export interface AgentTerminationResponseEvent extends BaseEvent {
   topic: "agent";
   type: "agent_termination_response";
 
@@ -204,6 +197,7 @@ export type AgentEvent =
   | EscalationResponseEvent
   | ReviewPresentationRequestEvent
   | ReviewPresentationResponseEvent
+  | AgentMessageEvent
   | AgentCreationRequestEvent
   | AgentCreationResponseEvent
   | AgentSuspensionRequestEvent

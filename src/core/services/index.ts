@@ -1,3 +1,5 @@
 export * from "./agent";
+export * from "./task";
 export * from "./memory";
 export * from "./prompt";
+export * from "./tool";

@@ -10,6 +10,7 @@ import type {
   TaskId,
   TaskStatus,
 } from "../core/schema";
+import { ensureStorageFile } from "./utils";
 
 type TaskDatabase = {
   nextTaskId: number;
@@ -21,10 +22,13 @@ export class TaskRepository {
   constructor(private readonly db: TaskDb) {}
 
   static async create(file = "./storage/tasks.json"): Promise<TaskRepository> {
-    const db = await JSONFilePreset<TaskDatabase>(file, {
-      nextTaskId: 1,
-      tasks: [],
-    });
+    const db = await JSONFilePreset<TaskDatabase>(
+      await ensureStorageFile(file),
+      {
+        nextTaskId: 1,
+        tasks: [],
+      },
+    );
 
     return new TaskRepository(db);
   }

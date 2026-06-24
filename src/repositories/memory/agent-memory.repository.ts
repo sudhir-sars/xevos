@@ -3,6 +3,7 @@
 import { JSONFilePreset } from "lowdb/node";
 import { ModelMessage } from "ai";
 import { AgentId, AgentMemory } from "../../core/schema";
+import { ensureStorageFile } from "../utils";
 
 type AgentMemoryDatabase = {
   agentMemories: AgentMemory[];
@@ -18,9 +19,12 @@ export class AgentMemoryRepository {
   static async create(
     file = "./storage/agent-memories.json",
   ): Promise<AgentMemoryRepository> {
-    const db = await JSONFilePreset<AgentMemoryDatabase>(file, {
-      agentMemories: [],
-    });
+    const db = await JSONFilePreset<AgentMemoryDatabase>(
+      await ensureStorageFile(file),
+      {
+        agentMemories: [],
+      },
+    );
 
     return new AgentMemoryRepository(db);
   }

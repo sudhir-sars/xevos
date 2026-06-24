@@ -4,19 +4,19 @@ import { JSONFilePreset } from "lowdb/node";
 
 import type {
   Agent,
+  AgentCreate,
   AgentId,
   AgentStatus,
   Department,
   Role,
   RoleDefinitionId,
-} from "../core/schema";
+} from "../../core/schema";
 
-type AgentCreate = Omit<Agent, "id" | "createdAt">;
-
-type AgentCounterKey = RoleDefinitionId;
+import { ensureStorageFile } from "../utils";
+import { DEFAULT_AGENT } from "./default-agent";
 
 type AgentDatabase = {
-  counters: Partial<Record<AgentCounterKey, number>>;
+  counters: Partial<Record<RoleDefinitionId, number>>;
   agents: Agent[];
 };
 
@@ -28,12 +28,50 @@ export class AgentRepository {
   static async create(
     file = "./storage/agents.json",
   ): Promise<AgentRepository> {
-    const db = await JSONFilePreset<AgentDatabase>(file, {
-      counters: {},
-      agents: [],
+    const db = await JSONFilePreset<AgentDatabase>(
+      await ensureStorageFile(file),
+      {
+        counters: {},
+        agents: [],
+      },
+    );
+
+    const repository = new AgentRepository(db);
+
+    await repository.seedDefaults();
+
+    return repository;
+  }
+
+  private async seedDefaults(): Promise<void> {
+    let changed = false;
+
+    const exists = this.db.data.agents.some(
+      (existing) =>
+        existing.role === DEFAULT_AGENT.role &&
+        existing.department === DEFAULT_AGENT.department,
+    );
+
+    if (exists) return;
+
+    const agentIdx = 1;
+    const roleDefinitionId: RoleDefinitionId = `${DEFAULT_AGENT.role}_${DEFAULT_AGENT.department}`;
+    const agentId: AgentId = `${DEFAULT_AGENT.role}_${DEFAULT_AGENT.department}_${agentIdx}`;
+
+    this.db.data.counters[roleDefinitionId] = agentIdx + 1;
+
+    this.db.data.agents.push({
+      ...DEFAULT_AGENT,
+      id: agentId,
+      manages: [],
+
+      status: "active",
+      createdAt: Date.now(),
     });
 
-    return new AgentRepository(db);
+    changed = true;
+
+    if (changed) await this.db.write();
   }
 
   get(agentId: AgentId): Agent {
@@ -46,9 +84,21 @@ export class AgentRepository {
     return agent;
   }
 
+  getCEO(): Agent {
+    const ceo = this.db.data.agents.find(
+      (agent) =>
+        agent.role === "executive" && agent.department === "organization",
+    );
+
+    if (!ceo) {
+      throw new Error("CEO agent not found");
+    }
+
+    return ceo;
+  }
+
   async createAgent(agent: AgentCreate): Promise<Agent> {
-    const roleDefinitionId =
-      `${agent.role}_${agent.department}` as RoleDefinitionId;
+    const roleDefinitionId: RoleDefinitionId = `${agent.role}_${agent.department}`;
 
     const nextId = (this.db.data.counters[roleDefinitionId] ?? 0) + 1;
 
@@ -58,6 +108,8 @@ export class AgentRepository {
       ...agent,
       id: `${roleDefinitionId}_${nextId}` as AgentId,
       createdAt: Date.now(),
+      manages: [],
+      status: "active",
     };
 
     this.db.data.agents.push(record);

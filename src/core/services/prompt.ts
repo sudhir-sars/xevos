@@ -1,7 +1,10 @@
 // services/prompt.service.ts
 import { Agent } from "../schema/agent.schema";
-import { PromptRepository } from "../../repositories/prompt.repository";
+import { PromptRepository } from "../../repositories/prompt";
 import { AgentRepository } from "../../repositories";
+import { ServiceId } from "../schema";
+
+export const promptServiceId: ServiceId = "service_prompts";
 
 export class PromptService {
   constructor(

@@ -1,8 +1,9 @@
-import type { AgentId, Event, ServiceId } from "../schema";
+import type { AgentId, Event, EventId, ServiceId } from "../schema";
 import { Xevos } from "../schema";
 
-export type EventHandler = (event: Event) => Promise<void> | void;
 type SubscriptionId = AgentId | ServiceId | Xevos;
+
+export type EventInput = Omit<Event, "id">;
 
 export class Mailbox {
   private readonly queue: Event[] = [];
@@ -10,7 +11,11 @@ export class Mailbox {
 
   push(event: Event): void {
     if (this.waiter) {
-      this.waiter(event);
+      const resolve = this.waiter;
+
+      this.waiter = undefined;
+      resolve(event);
+
       return;
     }
 
@@ -41,6 +46,12 @@ export class Mailbox {
 export class EventBus {
   private readonly mailboxes = new Map<SubscriptionId, Mailbox>();
 
+  private eventCounter = 0;
+
+  private nextEventId(): EventId {
+    return `event_${++this.eventCounter}` as EventId;
+  }
+
   subscribe(id: SubscriptionId): Mailbox {
     const mailbox = new Mailbox();
 
@@ -53,8 +64,15 @@ export class EventBus {
     this.mailboxes.delete(id);
   }
 
-  publish(event: Event): void {
-    this.mailboxes.get(event.target)?.push(event);
+  publish<T extends Event>(event: Omit<T, "id">): EventId {
+    const envelope: T = {
+      ...event,
+      id: this.nextEventId(),
+    } as T;
+
+    this.mailboxes.get(envelope.target)?.push(envelope);
+
+    return envelope.id;
   }
 
   getMailbox(id: SubscriptionId): Mailbox {
@@ -65,5 +83,13 @@ export class EventBus {
     }
 
     return mailbox;
+  }
+
+  hasSubscriber(id: SubscriptionId): boolean {
+    return this.mailboxes.has(id);
+  }
+
+  get subscriberCount(): number {
+    return this.mailboxes.size;
   }
 }

@@ -1,41 +1,93 @@
-export type Role = "executive" | "head" | "manager" | "worker";
+import { z } from "zod";
 
-export type Department =
-  | "organization"
-  | "engineering"
-  | "product"
-  | "design"
-  | "marketing"
-  | "sales"
-  | "finance"
-  | "legal"
-  | "support"
-  | "research";
+export const roleSchema = z.enum(["executive", "head", "manager", "worker"]);
 
-export type AgentStatus = "active" | "suspended";
+export type Role = z.infer<typeof roleSchema>;
 
-export type AgentKind = "operator" | "reviewer";
+export const departmentSchema = z.enum([
+  "organization",
+  "engineering",
+  "product",
+  "design",
+  "marketing",
+  "sales",
+  "finance",
+  "legal",
+  "support",
+  "research",
+]);
 
-export type ToolName = string;
+export type Department = z.infer<typeof departmentSchema>;
 
-export type RoleDefinitionId = `${Role}_${Department}`;
+export const agentStatusSchema = z.enum(["active", "suspended"]);
 
-export type AgentId = `${RoleDefinitionId}_${number}`;
+export type AgentStatus = z.infer<typeof agentStatusSchema>;
 
-export type SystemPromptRef = `prompts_${Role}_${Department}.md`;
+export const roleDefinitionIdSchema = z.string().refine(
+  (value): value is `${Role}_${Department}` => {
+    const [role, department] = value.split("_");
 
-export interface Agent {
-  id: AgentId;
-  role: Role;
-  department: Department;
-  kind: AgentKind;
-  createdAt: number;
-  objective: string;
-  kpis: string[];
-  responsibilities: string[];
-  status: AgentStatus;
-  systemPromptRef: SystemPromptRef;
-  reportsTo: AgentId | null;
-  manages: AgentId[];
-  tools: ToolName[];
-}
+    return (
+      roleSchema.options.includes(role as Role) &&
+      departmentSchema.options.includes(department as Department)
+    );
+  },
+  { message: "Invalid role definition id" },
+);
+
+export const principalIdSchema = z.literal("principal");
+export type PrincipalId = z.infer<typeof principalIdSchema>;
+
+export type RoleDefinitionId = z.infer<typeof roleDefinitionIdSchema>;
+
+export const agentIdSchema = z.string().refine(
+  (value): value is `${Role}_${Department}_${number}` => {
+    const parts = value.split("_");
+
+    if (parts.length !== 3) {
+      return false;
+    }
+
+    const [role, department, id] = parts;
+
+    return (
+      roleSchema.options.includes(role as Role) &&
+      departmentSchema.options.includes(department as Department) &&
+      /^\d+$/.test(id)
+    );
+  },
+  { message: "Invalid agent id" },
+);
+
+export type AgentId = z.infer<typeof agentIdSchema>;
+
+export const reportTargetIdSchema = z.union([agentIdSchema, principalIdSchema]);
+export type ReportTargetId = z.infer<typeof reportTargetIdSchema>;
+export const agentSchema = z.object({
+  id: agentIdSchema,
+  role: roleSchema,
+  department: departmentSchema,
+  createdAt: z.number(),
+  objective: z.string(),
+  kpis: z.array(z.string()),
+  responsibilities: z.array(z.string()),
+  status: agentStatusSchema,
+  reportsTo: reportTargetIdSchema,
+  manages: z.array(agentIdSchema),
+  tools: z.array(z.string()),
+});
+
+export const agentCreateSchema = agentSchema.pick({
+  role: true,
+  department: true,
+  objective: true,
+  kpis: true,
+  responsibilities: true,
+  reportsTo: true,
+  tools: true,
+  manages: true,
+  status: true,
+});
+
+export type AgentCreate = z.infer<typeof agentCreateSchema>;
+export type Agent = z.infer<typeof agentSchema>;

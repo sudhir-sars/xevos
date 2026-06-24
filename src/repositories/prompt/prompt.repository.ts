@@ -1,5 +1,12 @@
 import { JSONFilePreset } from "lowdb/node";
-import { Department, Role } from "../core/schema";
+import {
+  Department,
+  Role,
+  departmentSchema,
+  roleSchema,
+} from "../../core/schema";
+import { DEPARTMENT_PROMPTS, ROLE_PROMPTS } from "./default-prompts";
+import { ensureStorageFile } from "../utils";
 
 type PromptDatabase = {
   roles: Partial<Record<Role, string>>;
@@ -14,12 +21,40 @@ export class PromptRepository {
   static async create(
     file = "./storage/prompts.json",
   ): Promise<PromptRepository> {
-    const db = await JSONFilePreset<PromptDatabase>(file, {
-      roles: {},
-      departments: {},
-    });
+    const db = await JSONFilePreset<PromptDatabase>(
+      await ensureStorageFile(file),
+      {
+        roles: {},
+        departments: {},
+      },
+    );
 
-    return new PromptRepository(db);
+    const repository = new PromptRepository(db);
+    await repository.seedDefaults();
+
+    return repository;
+  }
+
+  private async seedDefaults(): Promise<void> {
+    let changed = false;
+
+    for (const role of roleSchema.options) {
+      if (this.db.data.roles[role] === undefined) {
+        this.db.data.roles[role] = ROLE_PROMPTS[role];
+        changed = true;
+      }
+    }
+
+    for (const department of departmentSchema.options) {
+      if (this.db.data.departments[department] === undefined) {
+        this.db.data.departments[department] = DEPARTMENT_PROMPTS[department];
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      await this.db.write();
+    }
   }
 
   getRolePrompt(role: Role): string {

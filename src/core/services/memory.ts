@@ -7,6 +7,7 @@ import type {
   MemoryWarehouse,
   ClosedReason,
   TaskId,
+  ServiceId,
 } from "../schema";
 
 import { TaskRepository } from "../../repositories/task.repository";
@@ -26,6 +27,8 @@ export type Learning = z.infer<typeof learningSchema>;
 
 const WAREHOUSE_CONTEXT_ID = "warehouse-context";
 const WAREHOUSE_CONTEXT_LIMIT = 5;
+
+export const memoryServiceId: ServiceId = "service_memory";
 
 export class MemoryService {
   constructor(
@@ -74,8 +77,6 @@ export class MemoryService {
         switch (event.type) {
           case "task_create_request":
             return `${event.body.title} ${event.body.description ?? ""}`.trim();
-          case "task_delegation_request":
-            return `task delegation ${event.body.taskId}`;
           case "task_update_request":
             return `task update ${event.body.taskId} ${JSON.stringify(event.body.patch)}`;
           case "task_transition_request":
@@ -102,6 +103,14 @@ export class MemoryService {
 
   async recordTurn(agent: Agent, messages: ModelMessage[]): Promise<void> {
     await this.agentMemoryRepository.append(agent.id, messages);
+  }
+
+  async recall(
+    query: string,
+    limit = WAREHOUSE_CONTEXT_LIMIT,
+  ): Promise<MemoryWarehouse[]> {
+    const entries = await this.warehouseRepository.list();
+    return this.search(entries, query, limit);
   }
 
   async closeTask(
