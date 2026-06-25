@@ -5,14 +5,7 @@ import type {
   ReviewPresentationRequestEvent,
   TaskId,
 } from "../../../../schema";
-import {
-  publish,
-  rationale,
-  taskId,
-  defineTool,
-  citations,
-  renderCitations,
-} from "../../ztypes";
+import { publish, rationale, taskId, defineTool } from "../../ztypes";
 import { AUDITOR_ID } from "../../../audit";
 
 const inputSchema = z.object({
@@ -25,7 +18,6 @@ const inputSchema = z.object({
     .describe(
       "Concrete proof the work is done: the exact commands you ran and their real output (tests passing, build succeeding, the server's actual responses). A summary without command output is not evidence and will be rejected.",
     ),
-  citations,
   rationale,
 });
 
@@ -48,9 +40,7 @@ export const requestReview = defineTool({
       topic: "agent",
       type: "review_presentation_request",
       body: {
-        summary: `${args.summary}\n\nEvidence:\n${args.evidence}${renderCitations(
-          args.citations,
-        )}`,
+        summary: `${args.summary}\n\nEvidence:\n${args.evidence}`,
         taskId: (args.taskId ?? null) as TaskId | null,
       },
     };

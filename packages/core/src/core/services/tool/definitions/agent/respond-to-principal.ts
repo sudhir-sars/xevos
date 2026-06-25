@@ -1,9 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-import { rationale, defineTool, citations, renderCitations } from "../../ztypes";
+import { rationale, defineTool } from "../../ztypes";
 
-const inputSchema = z.object({ message: z.string(), citations, rationale });
+const inputSchema = z.object({ message: z.string(), rationale });
 
 type Input = z.infer<typeof inputSchema>;
 
@@ -16,10 +16,7 @@ export const respondToPrincipal = defineTool({
   }),
 
   handler: (ctx, args: Input) => {
-    ctx.principalSink(
-      ctx.agent.id,
-      `${args.message}${renderCitations(args.citations)}`,
-    );
+    ctx.principalSink(ctx.agent.id, args.message);
 
     return {
       success: true,

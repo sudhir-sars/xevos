@@ -2,21 +2,9 @@ import { tool } from "ai";
 import { z } from "zod";
 
 import type { AgentId, AgentMessageEvent } from "../../../../schema";
-import {
-  publish,
-  agentId,
-  rationale,
-  defineTool,
-  citations,
-  renderCitations,
-} from "../../ztypes";
+import { publish, agentId, rationale, defineTool } from "../../ztypes";
 
-const inputSchema = z.object({
-  agentId,
-  content: z.string(),
-  citations,
-  rationale,
-});
+const inputSchema = z.object({ agentId, content: z.string(), rationale });
 
 type Input = z.infer<typeof inputSchema>;
 
@@ -34,7 +22,7 @@ export const sendMessage = defineTool({
       topic: "agent",
       type: "message",
       body: {
-        content: `${args.content}${renderCitations(args.citations)}`,
+        content: args.content,
       },
     };
 
