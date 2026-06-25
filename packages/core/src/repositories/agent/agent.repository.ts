@@ -1,6 +1,6 @@
 // repositories/agent.repository.ts
 
-import { JSONFilePreset } from "lowdb/node";
+import { and, eq } from "drizzle-orm";
 
 import type {
   Agent,
@@ -12,87 +12,73 @@ import type {
   RoleDefinitionId,
 } from "../../core/schema";
 
-import { ensureStorageFile } from "../utils";
+import { getDb, type DB } from "../../db/client";
+import { agents, counters } from "../../db/schema";
 import { DEFAULT_AGENT } from "./default-agent";
 
-type AgentDatabase = {
-  counters: Partial<Record<RoleDefinitionId, number>>;
-  agents: Agent[];
-};
-
-type AgentDb = Awaited<ReturnType<typeof JSONFilePreset<AgentDatabase>>>;
-
 export class AgentRepository {
-  constructor(private readonly db: AgentDb) {}
+  constructor(private readonly db: DB) {}
 
-  static async create(
-    file = "./storage/agents.json",
-  ): Promise<AgentRepository> {
-    const db = await JSONFilePreset<AgentDatabase>(
-      await ensureStorageFile(file),
-      {
-        counters: {},
-        agents: [],
-      },
-    );
-
-    const repository = new AgentRepository(db);
-
-    await repository.seedDefaults();
-
+  static async create(): Promise<AgentRepository> {
+    const repository = new AgentRepository(getDb());
+    repository.seedDefaults();
     return repository;
   }
 
-  private async seedDefaults(): Promise<void> {
-    let changed = false;
-
-    const exists = this.db.data.agents.some(
-      (existing) =>
-        existing.role === DEFAULT_AGENT.role &&
-        existing.department === DEFAULT_AGENT.department,
-    );
+  private seedDefaults(): void {
+    const exists = this.db
+      .select({ id: agents.id })
+      .from(agents)
+      .where(
+        and(
+          eq(agents.role, DEFAULT_AGENT.role),
+          eq(agents.department, DEFAULT_AGENT.department),
+        ),
+      )
+      .get();
 
     if (exists) return;
 
-    const agentIdx = 1;
     const roleDefinitionId: RoleDefinitionId = `${DEFAULT_AGENT.role}_${DEFAULT_AGENT.department}`;
-    const agentId: AgentId = `${DEFAULT_AGENT.role}_${DEFAULT_AGENT.department}_${agentIdx}`;
+    const agentId: AgentId = `${roleDefinitionId}_1`;
 
-    this.db.data.counters[roleDefinitionId] = agentIdx + 1;
+    this.db.transaction((tx) => {
+      tx.insert(agents)
+        .values({
+          ...DEFAULT_AGENT,
+          id: agentId,
+          manages: [],
+          status: "active",
+          createdAt: Date.now(),
+        })
+        .run();
 
-    this.db.data.agents.push({
-      ...DEFAULT_AGENT,
-      id: agentId,
-      manages: [],
-
-      status: "active",
-      createdAt: Date.now(),
+      tx.insert(counters).values({ key: roleDefinitionId, value: 2 }).run();
     });
-
-    changed = true;
-
-    if (changed) await this.db.write();
   }
 
   get(agentId: AgentId): Agent {
-    const agent = this.db.data.agents.find((agent) => agent.id === agentId);
+    const row = this.db
+      .select()
+      .from(agents)
+      .where(eq(agents.id, agentId))
+      .get();
 
-    if (!agent) {
-      throw new Error(`Agent "${agentId}" not found`);
-    }
+    if (!row) throw new Error(`Agent "${agentId}" not found`);
 
-    return agent;
+    return row;
   }
 
   getCEO(): Agent {
-    const ceo = this.db.data.agents.find(
-      (agent) =>
-        agent.role === "executive" && agent.department === "organization",
-    );
+    const ceo = this.db
+      .select()
+      .from(agents)
+      .where(
+        and(eq(agents.role, "executive"), eq(agents.department, "organization")),
+      )
+      .get();
 
-    if (!ceo) {
-      throw new Error("CEO agent not found");
-    }
+    if (!ceo) throw new Error("CEO agent not found");
 
     return ceo;
   }
@@ -100,75 +86,88 @@ export class AgentRepository {
   async createAgent(agent: AgentCreate): Promise<Agent> {
     const roleDefinitionId: RoleDefinitionId = `${agent.role}_${agent.department}`;
 
-    const nextId = (this.db.data.counters[roleDefinitionId] ?? 0) + 1;
+    return this.db.transaction((tx): Agent => {
+      const counter = tx
+        .select()
+        .from(counters)
+        .where(eq(counters.key, roleDefinitionId))
+        .get();
 
-    this.db.data.counters[roleDefinitionId] = nextId;
+      const nextId = (counter?.value ?? 0) + 1;
 
-    const record: Agent = {
-      ...agent,
-      id: `${roleDefinitionId}_${nextId}` as AgentId,
-      createdAt: Date.now(),
-      manages: [],
-      status: "active",
-    };
+      if (counter) {
+        tx.update(counters)
+          .set({ value: nextId })
+          .where(eq(counters.key, roleDefinitionId))
+          .run();
+      } else {
+        tx.insert(counters)
+          .values({ key: roleDefinitionId, value: nextId })
+          .run();
+      }
 
-    this.db.data.agents.push(record);
+      const record: Agent = {
+        ...agent,
+        id: `${roleDefinitionId}_${nextId}` as AgentId,
+        createdAt: Date.now(),
+        manages: [],
+        status: "active",
+      };
 
-    await this.db.write();
+      tx.insert(agents).values(record).run();
 
-    return record;
+      return record;
+    });
   }
 
-  async update(
-    agentId: AgentId,
-    updates: Partial<AgentCreate>,
-  ): Promise<Agent> {
-    const agent = this.db.data.agents.find((agent) => agent.id === agentId);
+  async update(agentId: AgentId, updates: Partial<AgentCreate>): Promise<Agent> {
+    const result = this.db
+      .update(agents)
+      .set(updates)
+      .where(eq(agents.id, agentId))
+      .returning()
+      .get();
 
-    if (!agent) {
-      throw new Error(`Agent "${agentId}" not found`);
-    }
+    if (!result) throw new Error(`Agent "${agentId}" not found`);
 
-    Object.assign(agent, updates);
-
-    await this.db.write();
-
-    return agent;
+    return result;
   }
 
   async delete(agentId: AgentId): Promise<void> {
-    const index = this.db.data.agents.findIndex(
-      (agent) => agent.id === agentId,
-    );
+    const deleted = this.db
+      .delete(agents)
+      .where(eq(agents.id, agentId))
+      .returning({ id: agents.id })
+      .get();
 
-    if (index === -1) {
-      throw new Error(`Agent "${agentId}" not found`);
-    }
-
-    this.db.data.agents.splice(index, 1);
-
-    await this.db.write();
+    if (!deleted) throw new Error(`Agent "${agentId}" not found`);
   }
 
   list(): Agent[] {
-    return [...this.db.data.agents];
+    return this.db.select().from(agents).all();
   }
 
   listByRole(role: Role): Agent[] {
-    return this.db.data.agents.filter((agent) => agent.role === role);
+    return this.db.select().from(agents).where(eq(agents.role, role)).all();
   }
 
   listByDepartment(department: Department): Agent[] {
-    return this.db.data.agents.filter(
-      (agent) => agent.department === department,
-    );
+    return this.db
+      .select()
+      .from(agents)
+      .where(eq(agents.department, department))
+      .all();
   }
 
   listByStatus(status: AgentStatus): Agent[] {
-    return this.db.data.agents.filter((agent) => agent.status === status);
+    return this.db.select().from(agents).where(eq(agents.status, status)).all();
   }
 
   listReports(managerId: AgentId): Agent[] {
-    return this.db.data.agents.filter((agent) => agent.reportsTo === managerId);
+    return this.db
+      .select()
+      .from(agents)
+      .where(eq(agents.reportsTo, managerId))
+      .all();
   }
 }
