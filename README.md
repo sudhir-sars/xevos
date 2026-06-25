@@ -7,8 +7,15 @@ framework: a system for taking a single high-level directive ("research the best
 AI startup ideas this quarter" / "build and ship Product X") and pursuing it
 autonomously — decomposing it into objectives, delegating work down a hierarchy of
 specialized agents, executing with real tools, **verifying its own output against
-what was actually done**, and reporting back to a human with the evidence and
-sources behind every claim.
+what was actually done**, and reporting back with the evidence and sources behind
+every claim.
+
+**The end goal:** hand a real company to it — codebase, product, customers, brand —
+and have it run the operating departments (support, marketing, legal, engineering)
+as a **continuous, self-managing loop**, with humans engaged only at the few
+high-stakes gates rather than in the day-to-day. The runtime below is the
+foundation that goal is being built on; see [Where this is headed](#where-this-is-headed)
+for the honest gap between today and that target.
 
 It is built on two hard assumptions:
 
@@ -23,8 +30,10 @@ It is built on two hard assumptions:
 > today — a principal talks to the executive, work flows down the hierarchy,
 > workers execute with tools, an independent Auditor verifies the result against
 > the agent's real actions, and everything streams to a web dashboard in real
-> time. The governance layer (budgets, approval gates, kill switch) is the next
-> milestone — see [Roadmap](#roadmap) for what exists today versus what is planned.
+> time. The continuous-operation and governance layers (a clock, durability,
+> budgets, approval gates, kill switch) are the next milestones — see
+> [Where this is headed](#where-this-is-headed) for the honest gap between today
+> and a company that runs itself.
 
 ---
 
@@ -240,9 +249,52 @@ packages/
 
 ---
 
-## Roadmap
+## Where this is headed
 
-The framework is built bottom-up, substrate first.
+The destination is a company that runs itself. The honest gap between today and
+that goal is one shift and seven pillars.
+
+### The core shift: episodic → continuous
+
+Today the runtime is **reactive and episodic**: the principal sends a directive,
+work flows down the hierarchy once, and then every agent parks until the next
+message. A real company never "finishes" — it runs on a clock and reacts to the
+outside world. So the foundational missing piece isn't a feature, it's a
+**heartbeat**: a sense of time, a connection to external events, and standing
+objectives that are never "done". Everything below depends on that.
+
+### The seven pillars
+
+1. **Always-on operation** — a scheduler/clock (recurring cadences: support triage,
+   standups, marketing reviews), external event ingestion (email, tickets, signups,
+   payments, CI failures, alerts → bus events), standing KPI-driven objectives, and
+   liveness so no agent parks forever.
+2. **Durability** — the event bus and stores are in-memory/JSON today; a crash loses
+   in-flight work. Needs a persisted, replayable event log, crash recovery, and
+   idempotency so restarts never double-act. **Migrating the substrate to
+   [Convex](https://convex.dev)** (already the intended backend) delivers durable
+   reactive storage, scheduled functions (the clock), and real-time subscriptions in
+   one move — the highest-leverage single step.
+3. **Real-world tools** — authenticated connectors per department: support (inbox,
+   help desk, KB), marketing (CMS, social, campaigns, analytics), engineering (GitHub,
+   CI, deploy, error monitoring — the code sandbox already exists), legal (doc gen +
+   review), finance (payments/invoicing).
+4. **Brakes & governance** — enforced budgets (token/$/action ceilings), a policy
+   layer in front of tools (allowlists, outbound rate limits, content filters), a
+   global kill switch, and a persisted, immutable audit log. Today this layer is
+   designed but not implemented. **Build the brakes before the gas.**
+5. **Quality & self-correction** — extend the grounded Auditor to every department,
+   close the loop on outcomes (did the ticket resolve? did the campaign convert?) →
+   re-plan → post-mortems, and make memory compound over time.
+6. **Owner control plane** — KPI/spend/queue dashboards, alerting for the rare
+   escalation, cost monitoring, and an override channel.
+7. **Company handoff** — ingest the real company (codebase, product knowledge, brand,
+   customer history, legal templates, KPI targets, credentials) behind a company
+   brief the executive operates from.
+
+### Phased roadmap
+
+Built bottom-up, substrate first. Done today:
 
 - [x] **Substrate** — event bus, tool registry, memory stores, Docker sandboxes, model pool
 - [x] **Core schemas** — Agent, Task, Memory, typed Events
@@ -251,13 +303,29 @@ The framework is built bottom-up, substrate first.
 - [x] **Independent verification** — stateless Auditor grounded in real tool history and sandbox state
 - [x] **Citation provenance** — structured sources that flow up the org unchanged
 - [x] **Observability** — WebSocket event tap + live web dashboard
-- [ ] **Governance layer** — budgets, autonomy tiers, approval gates, kill switch
-- [ ] **Durability** — persisted event log, crash recovery, resumable runs
-- [ ] **Feedback loops** — task re-planning, KPI tracking, post-mortems
 
-### Maturity model
+Toward a self-running company, in order:
 
-Autonomy is grown in three stages, not switched on day one:
+- [ ] **Phase 1 — Durable substrate (Convex):** persisted event log, reactive stores, crash recovery
+- [ ] **Phase 2 — Continuous loop:** scheduler/heartbeat, external event ingestion, standing objectives + KPI tracking
+- [ ] **Phase 3 — Governance brakes:** enforced budgets, persisted audit log, kill switch, outbound rate limits
+- [ ] **Phase 4 — First real department (narrow & reversible):** e.g. support email triage with drafted replies, or engineering on GitHub + CI
+- [ ] **Phase 5 — Per-department auditing + feedback loops:** outcome measurement, re-planning, post-mortems
+- [ ] **Phase 6 — Widen integrations & loosen gates** per the maturity model
+
+### On "no human in the loop"
+
+Be clear-eyed about the dangerous frontier: **fully autonomous *and* able to spend
+money, make legal commitments, or send mass public communications** is how an
+always-on org does irreversible damage unsupervised. The workable version is not
+"remove the human" but "**replace the human gate with hard programmatic policy**"
+for low-blast-radius work — strict spend caps, allowlists, rate limits, content
+checks — while keeping a thin gate (or absolute hard limits) on the handful of
+catastrophic actions. You can realistically reach near-zero human touch on
+engineering, drafting, triage, and internal ops long before it is safe on spend,
+legal, or mass comms.
+
+Autonomy is therefore grown in three stages, not switched on day one:
 
 1. **Crawl — human-supervised.** Agents propose; humans approve nearly everything.
 2. **Walk — human-on-the-loop.** Agents act on reversible/low-stakes work; humans review by exception.
