@@ -16,7 +16,10 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
-    "format": "prettier . --write"
+    "format": "prettier . --write",
+    "convex:dev": "convex dev",
+    "convex:codegen": "convex codegen",
+    "convex:deploy": "convex deploy"
   },
   "devDependencies": {
     "prettier": "^3.8.4",

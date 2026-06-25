@@ -34,3 +34,4 @@ Thumbs.db
 
 # Convex local files
 .convex/
+convex/_generated/
