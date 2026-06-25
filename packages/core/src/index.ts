@@ -76,13 +76,6 @@ async function main(): Promise<void> {
     port: observerPort(),
     onPrincipalMessage: (content) => principalSvc.send(content),
   });
-
-  const directive =
-    process.argv.slice(2).join(" ").trim() ||
-    "Stand up the organization: define the first objectives, staff the departments you need, and report your plan back to me.";
-
-  console.log(`[principal] ⇒ ${executive.id}\n${directive}\n`);
-  principalSvc.send(directive);
 }
 
 main().catch((err) => {

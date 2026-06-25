@@ -15,10 +15,12 @@ import type {
   AgentTerminationResponseEvent,
   Department,
   Event,
+  EventId,
   EventRes,
   Role,
   ServiceId,
 } from "../schema";
+import { departmentSchema } from "../schema";
 
 import type { AgentRepository, TaskRepository } from "../../repositories";
 
@@ -32,12 +34,32 @@ import { toolNamesFor } from "./tool";
 
 export const AGENT_SERVICE_ID: ServiceId = "service_agent";
 
-const SUBORDINATE_ROLE: Record<Role, Role | null> = {
-  executive: "head",
-  head: "manager",
-  manager: "worker",
-  worker: null,
+/**
+ * Authority rank. Roles are CAPABILITIES, not mandatory layers: a creator may
+ * spawn any role strictly below its own rank, so the live tree can skip levels
+ * and stay flat — an executive can delegate straight to a worker; a head can
+ * staff workers directly without a manager in between. The spawn policy below is
+ * what keeps that flatness from quietly growing into a cathedral of managers.
+ */
+const ROLE_RANK: Record<Role, number> = {
+  executive: 0,
+  head: 1,
+  manager: 2,
+  worker: 3,
 };
+
+const canCreate = (creator: Role, target: Role): boolean =>
+  ROLE_RANK[target] > ROLE_RANK[creator];
+
+/**
+ * Spawn policy — the enforced half of "as flat as the task tolerates". Depth is
+ * the most expensive dimension (every layer is an LLM round-trip down and back),
+ * so we cap it hard; fan-out is cheap and parallel, so its cap is generous. Tune
+ * here.
+ */
+const MAX_DEPTH = 3; // executive is depth 0; the deepest leaf may sit at depth 3
+const MAX_DIRECT_REPORTS = 8; // per-agent fan-out ceiling
+const MAX_TOTAL_AGENTS = 40; // global ceiling on the whole org
 
 export class AgentService {
   private readonly agents = new Map<AgentId, BaseAgent>();
@@ -154,32 +176,62 @@ export class AgentService {
         },
       };
 
-      this.publish(response);
+      this.publish(response, event.id);
 
       return;
     }
 
-    const role = SUBORDINATE_ROLE[creator.role];
+    const role = event.body.role;
 
-    if (!role) {
-      const response: EventRes<AgentCreationResponseEvent> = {
-        topic: "agent",
-        target: event.source,
-        type: "agent_creation_response",
-        body: {
-          approved: false,
-          agentId: null,
-          reason: `${creator.role} agents cannot create subordinates`,
-        },
-      };
-
-      this.publish(response);
-
-      return;
+    // 1. Capability: may this creator spawn this role at all?
+    if (!canCreate(creator.role, role)) {
+      return this.rejectCreation(
+        event,
+        `${creator.role} cannot create ${role}`,
+      );
     }
 
-    const department: Department =
-      creator.role === "executive" ? event.body.department : creator.department;
+    // 2. Spawn policy: keep the org flat and bounded.
+    if (this.agentRepository.list().length >= MAX_TOTAL_AGENTS) {
+      return this.rejectCreation(
+        event,
+        `organization has reached its size limit (${MAX_TOTAL_AGENTS} agents)`,
+      );
+    }
+
+    if (creator.manages.length >= MAX_DIRECT_REPORTS) {
+      return this.rejectCreation(
+        event,
+        `${creatorId} already has ${MAX_DIRECT_REPORTS} direct reports; delegate through them rather than adding more`,
+      );
+    }
+
+    if (this.depthOf(creator) + 1 > MAX_DEPTH) {
+      return this.rejectCreation(
+        event,
+        `max org depth (${MAX_DEPTH}) reached; this work must be delegated to an existing agent, not nested deeper`,
+      );
+    }
+
+    // 3. Department is an orthogonal axis, not a tree level. The executive picks
+    // which department a head/subordinate belongs to; everyone else inherits the
+    // creator's department.
+    let department: Department;
+
+    if (creator.role === "executive") {
+      const requested = event.body.department;
+
+      if (!departmentSchema.options.includes(requested)) {
+        return this.rejectCreation(
+          event,
+          `unknown department "${requested}"`,
+        );
+      }
+
+      department = requested;
+    } else {
+      department = creator.department;
+    }
 
     const created = await this.agentRepository.createAgent({
       role,
@@ -210,7 +262,7 @@ export class AgentService {
       },
     };
 
-    this.publish(response);
+    this.publish(response, event.id);
   }
 
   private async handleSuspension(
@@ -230,7 +282,7 @@ export class AgentService {
       },
     };
 
-    this.publish(response);
+    this.publish(response, event.id);
   }
 
   private async handleResume(event: AgentResumeRequestEvent): Promise<void> {
@@ -250,7 +302,7 @@ export class AgentService {
       },
     };
 
-    this.publish(response);
+    this.publish(response, event.id);
   }
 
   private async handleTermination(
@@ -274,13 +326,46 @@ export class AgentService {
       },
     };
 
-    this.publish(response);
+    this.publish(response, event.id);
   }
 
-  private publish<T extends Event>(event: EventRes<T>): void {
+  /** Reject an agent-creation request with a readable reason the creator can act on. */
+  private rejectCreation(
+    request: AgentCreationRequestEvent,
+    reason: string,
+  ): void {
+    const response: EventRes<AgentCreationResponseEvent> = {
+      topic: "agent",
+      target: request.source,
+      type: "agent_creation_response",
+      body: { approved: false, agentId: null, reason },
+    };
+
+    this.publish(response, request.id);
+  }
+
+  /** Distance from the executive root (executive = 0), by walking reportsTo. */
+  private depthOf(agent: Agent): number {
+    let depth = 0;
+    let current = agent;
+
+    // The MAX_TOTAL_AGENTS bound doubles as a cycle guard.
+    while (current.reportsTo !== "principal" && depth <= MAX_TOTAL_AGENTS) {
+      current = this.agentRepository.get(current.reportsTo);
+      depth++;
+    }
+
+    return depth;
+  }
+
+  private publish<T extends Event>(
+    event: EventRes<T>,
+    correlationId?: EventId,
+  ): void {
     this.bus.publish({
       source: AGENT_SERVICE_ID,
       ...event,
+      ...(correlationId ? { correlationId } : {}),
     } as T);
   }
 }

@@ -26,6 +26,6 @@ export const createSubordinateAgent = defineTool({
       body: args,
     };
 
-    return publish(ctx.bus, event);
+    return publish(ctx.bus, event, "agent_creation_response");
   },
 });

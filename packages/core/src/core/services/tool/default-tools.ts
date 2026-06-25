@@ -31,14 +31,11 @@ export const ROLE_TOOLS = {
 export const DEPARTMENT_WORKER_TOOLS = {
   organization: [],
   engineering: [],
-  product: [],
-  design: [],
-  marketing: [],
-  sales: [],
-  finance: [],
-  legal: [],
-  support: [],
   research: [],
+  marketing: [],
+  support: [],
+  sales: [],
+  legal: [],
 } as const satisfies Record<Department, readonly ToolName[]>;
 
 export function toolNamesFor(role: Role, department: Department): ToolName[] {

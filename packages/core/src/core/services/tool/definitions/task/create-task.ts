@@ -44,6 +44,6 @@ export const createTask = defineTool({
       body,
     };
 
-    return publish(ctx.bus, event);
+    return publish(ctx.bus, event, "task_create_response");
   },
 });

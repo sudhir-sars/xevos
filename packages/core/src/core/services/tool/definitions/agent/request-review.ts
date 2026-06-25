@@ -31,6 +31,6 @@ export const requestReview = defineTool({
       },
     };
 
-    return publish(ctx.bus, event);
+    return publish(ctx.bus, event, "review_presentation_response");
   },
 });

@@ -30,6 +30,6 @@ export const requestInformation = defineTool({
       },
     };
 
-    return publish(ctx.bus, event);
+    return publish(ctx.bus, event, "information_response");
   },
 });

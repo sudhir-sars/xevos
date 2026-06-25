@@ -56,8 +56,19 @@ export class EventBus {
   /** Read-only taps notified on every published event (broadcast). */
   private readonly observers = new Set<EventObserver>();
 
+  /** Monotonic publish counter — the source of strictly-increasing event ids. */
+  private seq = 0;
+
   private nextEventId(): EventId {
-    return `event_${Date.now()}` as EventId;
+    return `event_${++this.seq}` as EventId;
+  }
+
+  /**
+   * Number of events published so far, equal to the latest event's sequence.
+   * The observer uses this as the snapshot high-water mark (`throughSeq`).
+   */
+  get publishedCount(): number {
+    return this.seq;
   }
 
   subscribe(id: SubscriptionId): Mailbox {

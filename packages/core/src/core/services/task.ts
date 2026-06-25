@@ -4,6 +4,7 @@ import type {
   AgentId,
   ClosedReason,
   Event,
+  EventId,
   EventRes,
   MutableTask,
   ServiceId,
@@ -106,7 +107,7 @@ export class TaskService {
         },
       };
 
-      this.publish(response);
+      this.publish(response, event.id);
     } catch (error) {
       const response: EventRes<TaskCreateResponseEvent> = {
         topic: "task",
@@ -120,7 +121,7 @@ export class TaskService {
         },
       };
 
-      this.publish(response);
+      this.publish(response, event.id);
     }
   }
 
@@ -142,7 +143,7 @@ export class TaskService {
         },
       };
 
-      this.publish(response);
+      this.publish(response, event.id);
 
       return;
     }
@@ -158,7 +159,7 @@ export class TaskService {
         },
       };
 
-      this.publish(response);
+      this.publish(response, event.id);
 
       return;
     }
@@ -243,10 +244,14 @@ export class TaskService {
     }
   }
 
-  private publish<T extends Event>(event: EventRes<T>): void {
+  private publish<T extends Event>(
+    event: EventRes<T>,
+    correlationId?: EventId,
+  ): void {
     this.bus.publish({
       source: TASK_SERVICE_ID,
       ...event,
+      ...(correlationId ? { correlationId } : {}),
     } as T);
   }
 }

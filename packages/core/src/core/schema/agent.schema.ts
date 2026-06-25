@@ -7,14 +7,11 @@ export type Role = z.infer<typeof roleSchema>;
 export const departmentSchema = z.enum([
   "organization",
   "engineering",
-  "product",
-  "design",
-  "marketing",
-  "sales",
-  "finance",
-  "legal",
-  "support",
   "research",
+  "marketing",
+  "support",
+  "sales",
+  "legal",
 ]);
 
 export type Department = z.infer<typeof departmentSchema>;
@@ -23,17 +20,17 @@ export const agentStatusSchema = z.enum(["active", "suspended"]);
 
 export type AgentStatus = z.infer<typeof agentStatusSchema>;
 
-export const roleDefinitionIdSchema = z.string().refine(
-  (value): value is `${Role}_${Department}` => {
-    const [role, department] = value.split("_");
-
-    return (
-      roleSchema.options.includes(role as Role) &&
-      departmentSchema.options.includes(department as Department)
-    );
-  },
-  { message: "Invalid role definition id" },
-);
+export const roleDefinitionIdSchema = z
+  .string()
+  .refine(
+    (value): value is `${Role}_${Department}` =>
+      roleSchema.options.some((role) =>
+        departmentSchema.options.some(
+          (department) => value === `${role}_${department}`,
+        ),
+      ),
+    { message: "Invalid role definition id" },
+  );
 
 export const principalIdSchema = z.literal("principal");
 export type PrincipalId = z.infer<typeof principalIdSchema>;
@@ -42,18 +39,16 @@ export type RoleDefinitionId = z.infer<typeof roleDefinitionIdSchema>;
 
 export const agentIdSchema = z.string().refine(
   (value): value is `${Role}_${Department}_${number}` => {
-    const parts = value.split("_");
+    const match = value.match(/_(\d+)$/);
 
-    if (parts.length !== 3) {
-      return false;
-    }
+    if (!match) return false;
 
-    const [role, department, id] = parts;
+    const prefix = value.slice(0, value.length - match[0].length);
 
-    return (
-      roleSchema.options.includes(role as Role) &&
-      departmentSchema.options.includes(department as Department) &&
-      /^\d+$/.test(id)
+    return roleSchema.options.some((role) =>
+      departmentSchema.options.some(
+        (department) => prefix === `${role}_${department}`,
+      ),
     );
   },
   { message: "Invalid agent id" },

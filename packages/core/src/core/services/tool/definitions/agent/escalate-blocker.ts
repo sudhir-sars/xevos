@@ -38,6 +38,6 @@ export const escalateBlocker = defineTool({
       },
     };
 
-    return publish(ctx.bus, event);
+    return publish(ctx.bus, event, "escalation_response");
   },
 });

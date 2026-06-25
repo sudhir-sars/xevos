@@ -25,7 +25,7 @@ const WORKER_MAX_STEPS = 30;
  * here behind a single `if`: it owns a Docker sandbox, and the tool service
  * therefore hands it filesystem/bash tools. With a sandbox it runs a multi-step
  * coding loop; without one it takes a single decisive turn per event. There is
- * no separate "engineering agent" or "worker" class — it is all this.
+ * no separate "engineering worker" class — it is all this.
  */
 export class BaseAgent {
   private running = false;
@@ -149,15 +149,16 @@ export class BaseAgent {
       body = `From ${event.source}:${JSON.stringify(payload, null, 2)}`;
     }
 
-    return { role: "user", content: `[${event.topic}/${event.type}]\n${body}` };
+    const correlation = event.correlationId
+      ? ` (in reply to your command ${event.correlationId})`
+      : "";
+
+    return {
+      role: "user",
+      content: `[${event.topic}/${event.type}]${correlation}\n${body}`,
+    };
   }
 
-  /**
-   * One-time, deterministic sandbox setup for an engineering worker: start the
-   * container and put it on its own branch (named after the agent) before any
-   * gated git tool runs. Done in code — not left to the model — so branch
-   * isolation can never be skipped. Idempotent.
-   */
   private async prepareSandbox(): Promise<void> {
     if (!this.sandbox || this.prepared) return;
 

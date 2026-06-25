@@ -37,6 +37,6 @@ export const updateTaskStatus = defineTool({
       },
     };
 
-    return publish(ctx.bus, event);
+    return publish(ctx.bus, event, "task_transition_response");
   },
 });

@@ -6,19 +6,19 @@
       "status": "backlog",
       "review": null,
       "assignedTo": null,
-      "createdAt": 1782370109058,
-      "updatedAt": 1782370109058,
-      "referceTask": null,
-      "title": "Define Initial Product Strategy and Roadmap",
-      "description": "Define the initial product strategy and high-level roadmap based on market needs and principal vision.",
+      "createdAt": 1782378376122,
+      "updatedAt": 1782378376122,
+      "referceTask": [],
+      "title": "Develop AI-powered Todo App MVP",
+      "description": "Develop an MVP for an AI-powered todo app that includes basic todo management and AI-driven prioritization/categorization.",
       "acceptanceCriteria": [
-        "Detailed product strategy document",
-        "High-level product roadmap for the next 6 months",
-        "Market analysis report"
+        "User can create, read, update, and delete todo items.",
+        "AI capability to suggest task prioritization or categorization.",
+        "Simple, functional UI for MVP."
       ],
       "dependencies": [],
       "priority": "high",
-      "deadline": 1738368000,
+      "deadline": 1740000000,
       "budget": {
         "maxTokens": 50000,
         "maxUsd": 1
@@ -26,26 +26,24 @@
     },
     {
       "id": "task_2",
-      "status": "backlog",
+      "status": "completed",
       "review": null,
-      "assignedTo": null,
-      "createdAt": 1782370113309,
-      "updatedAt": 1782370113309,
+      "assignedTo": "worker_engineering_1",
+      "createdAt": 1782378384946,
+      "updatedAt": 1782378936942,
       "referceTask": [
         "task_1"
       ],
-      "title": "Define Technical Architecture and Stack",
-      "description": "Define the technical architecture and core technology stack to support the initial product roadmap.",
+      "title": "Develop AI-powered Todo App MVP",
+      "description": "Develop the MVP of the AI-powered todo app. Focus on core CRUD operations first, then integrate AI features for prioritization/categorization. Ensure a functional UI exists.",
       "acceptanceCriteria": [
-        "Proposed technical stack selection",
-        "High-level system architecture diagram",
-        "Infrastructure strategy (cloud provider, CI/CD)"
+        "User can create, read, update, and delete todo items.",
+        "AI capability to suggest task prioritization or categorization.",
+        "Simple, functional UI for MVP."
       ],
-      "dependencies": [
-        "task_1"
-      ],
+      "dependencies": [],
       "priority": "high",
-      "deadline": 1738368000,
+      "deadline": 1738454400000,
       "budget": {
         "maxTokens": 50000,
         "maxUsd": 1

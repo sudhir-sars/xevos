@@ -5,15 +5,15 @@ import { Department, Role } from "./schema";
 export function getModel(_department: Department, role: Role): LanguageModel {
   switch (role) {
     case "executive":
-      return google("gemini-3-flash-preview");
+      return google("gemini-3.1-flash-lite-preview");
 
     case "head":
-      return google("gemini-3-flash-preview");
+      return google("gemini-3.1-flash-lite-preview");
 
     case "manager":
-      return google("gemini-3-flash-preview");
+      return google("gemini-3.1-flash-lite-preview");
 
     case "worker":
-      return google("gemini-3-flash-preview");
+      return google("gemini-3.1-flash-lite-preview");
   }
 }

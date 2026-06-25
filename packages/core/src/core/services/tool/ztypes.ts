@@ -46,16 +46,34 @@ export function defineTool<const TName extends string, TInput = unknown>(
   return definition;
 }
 
+/**
+ * Publish a command onto the event bus and return an ACKNOWLEDGEMENT — not a
+ * result. The bus is asynchronous: the real outcome (a taskId, an agentId, an
+ * answer) arrives later as a separate event addressed back to the caller. The
+ * returned `eventId` is the correlation handle that response will carry as its
+ * `correlationId`.
+ *
+ * @param awaiting the `type` of the response event the caller should expect, or
+ *   `null`/omitted for fire-and-forget commands that get no direct reply.
+ */
 export function publish<T extends Event>(
   bus: EventBus,
   event: Omit<T, "id">,
+  awaiting?: string | null,
 ): ToolResult {
   const eventId = bus.publish<T>(event);
+
+  const note = awaiting
+    ? `Acknowledged — your command was published to the event bus. This is NOT the result. The outcome will arrive later as a separate "${awaiting}" event addressed to you, carrying correlationId "${eventId}". Do not invent or act on any id (taskId, agentId, …) until that event arrives — if you have nothing else to do, call wait_until_response.`
+    : `Acknowledged — your command was published to the event bus. No direct reply is expected for this; you will learn the outcome through later events. Continue with other work or call wait_until_response.`;
 
   return {
     success: true,
     result: {
+      status: "accepted",
       eventId,
+      awaiting: awaiting ?? null,
+      note,
     },
   };
 }
