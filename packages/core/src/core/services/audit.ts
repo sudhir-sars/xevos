@@ -11,6 +11,7 @@ import {
 import { z } from "zod";
 
 import type {
+  AgentId,
   EndpointId,
   Event,
   ReviewPresentationRequestEvent,
@@ -19,7 +20,11 @@ import type {
   ServiceId,
   Task,
 } from "../schema";
-import type { AgentRepository, TaskRepository } from "../../repositories";
+import type {
+  AgentMemoryRepository,
+  AgentRepository,
+  TaskRepository,
+} from "../../repositories";
 
 import { type EventBus, type Mailbox } from "../event-bus";
 import { DockerSandbox } from "../sandbox";
@@ -37,6 +42,76 @@ export const AUDITOR_ID: ServiceId = "auditor_service";
 
 /** Backstop on the act→observe loop so a runaway review can't loop forever. */
 const MAX_REVIEW_STEPS = 100;
+
+/** Per-tool-result clip so one huge result (e.g. a full web page) can't flood the review prompt. */
+const MAX_RESULT_CHARS = 3000;
+/** Overall cap on the rendered action log; the most RECENT actions are kept. */
+const MAX_ACTION_LOG_CHARS = 24000;
+
+/** Poll the submitter's memory until its just-submitted turn lands, or give up. */
+const ACTION_LOG_POLL_ATTEMPTS = 6;
+const ACTION_LOG_POLL_MS = 100;
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+function clipResult(value: unknown): string {
+  let text: string;
+  try {
+    text = typeof value === "string" ? value : JSON.stringify(value);
+  } catch {
+    text = String(value);
+  }
+  text = text ?? "";
+  return text.length > MAX_RESULT_CHARS
+    ? `${text.slice(0, MAX_RESULT_CHARS)}… [truncated]`
+    : text;
+}
+
+/**
+ * Render the submitter's actual tool-call history into a flat log: every tool it
+ * called, with arguments, and the real result that came back. This is GROUND
+ * TRUTH about what the agent did — a research worker's real web_search queries
+ * and the sources it actually retrieved — so the Auditor can check the report's
+ * claims against what happened, not just trust the prose. Kept to the most
+ * recent actions if the history is long.
+ */
+function renderActionLog(messages: readonly ModelMessage[]): string {
+  const lines: string[] = [];
+
+  for (const message of messages) {
+    if (typeof message.content === "string") continue;
+
+    for (const part of message.content) {
+      switch (part.type) {
+        case "tool-call":
+          lines.push(`CALL ${part.toolName}(${clipResult(part.input)})`);
+          break;
+        case "tool-result":
+          lines.push(`  → RESULT ${part.toolName}: ${clipResult(part.output)}`);
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  const log = lines.join("\n");
+  return log.length > MAX_ACTION_LOG_CHARS
+    ? `… [earlier actions truncated]\n${log.slice(-MAX_ACTION_LOG_CHARS)}`
+    : log;
+}
+
+/** True once the submitter's memory contains a request_review tool-call (its submission turn). */
+function hasSubmissionTurn(messages: readonly ModelMessage[]): boolean {
+  return messages.some(
+    (m) =>
+      Array.isArray(m.content) &&
+      m.content.some(
+        (p) => p.type === "tool-call" && p.toolName === "request_review",
+      ),
+  );
+}
 
 /** ids are `${role}_${department}_${n}`; only engineering workers own sandboxes. */
 function isEngineeringWorker(id: string): boolean {
@@ -64,8 +139,28 @@ export class AuditService {
     private readonly bus: EventBus,
     private readonly tasks: TaskRepository,
     private readonly agents: AgentRepository,
+    private readonly agentMemory: AgentMemoryRepository,
   ) {
     this.mailbox = bus.subscribe(AUDITOR_ID);
+  }
+
+  /**
+   * Pull the submitter's raw tool-call history. The submission turn is recorded
+   * by the submitter AFTER its request_review fires, so there is a brief race
+   * with this review starting — poll the (shared, in-memory) store until that
+   * turn lands rather than reviewing against a stale log.
+   */
+  private async loadActionLog(submitter: AgentId): Promise<string> {
+    let messages: readonly ModelMessage[] = [];
+
+    for (let attempt = 0; attempt < ACTION_LOG_POLL_ATTEMPTS; attempt++) {
+      const memory = await this.agentMemory.get(submitter);
+      messages = memory?.messages ?? [];
+      if (hasSubmissionTurn(messages)) break;
+      await sleep(ACTION_LOG_POLL_MS);
+    }
+
+    return renderActionLog(messages);
   }
 
   start(): void {
@@ -106,6 +201,11 @@ export class AuditService {
       ? await this.tasks.get(event.body.taskId)
       : null;
     const coding = isEngineeringWorker(submitter);
+
+    // The submitter's REAL tool-call history: what it actually did, not just the
+    // prose it pasted. For non-coding work (e.g. research) this is the only
+    // ground truth there is — the searches it ran and the sources it retrieved.
+    const actionLog = await this.loadActionLog(submitter as AgentId);
 
     // For a coding task, attach to the submitter's sandbox so quality is judged
     // against the real code, not just the pasted evidence. The container is the
@@ -156,7 +256,7 @@ export class AuditService {
             notes:
               "The workspace is empty — no source files were produced. The submitted evidence cannot be trusted over an empty sandbox: the task was not actually built. Do the real work in the sandbox, commit it, and resubmit.",
           }
-        : await this.assess(event, task, sandbox, coding, groundTruth);
+        : await this.assess(event, task, sandbox, coding, groundTruth, actionLog);
 
     // Bug 3 fix: pause the sandbox after assessment — we resumed it, so we
     // should return it to a paused state. Never destroy: it belongs to the worker.
@@ -211,6 +311,7 @@ export class AuditService {
     sandbox: DockerSandbox | undefined,
     coding: boolean,
     groundTruth: string,
+    actionLog: string,
   ): Promise<{ verdict: ReviewVerdict; notes: string }> {
     let captured: { verdict: ReviewVerdict; notes: string } | null = null;
 
@@ -249,7 +350,13 @@ export class AuditService {
     const messages: ModelMessage[] = [
       {
         role: "user",
-        content: this.buildReviewPrompt(event, task, coding, groundTruth),
+        content: this.buildReviewPrompt(
+          event,
+          task,
+          coding,
+          groundTruth,
+          actionLog,
+        ),
       },
     ];
 
@@ -282,6 +389,7 @@ export class AuditService {
     task: Task | null,
     coding: boolean,
     groundTruth: string,
+    actionLog: string,
   ): string {
     const lines: string[] = [
       `${event.source} has submitted work for your review${
@@ -303,6 +411,20 @@ export class AuditService {
           "- (none specified)",
       );
     }
+
+    // The submitter's REAL tool-call history — what it actually did. This is
+    // ground truth: trust it over the summary. If the report claims sources,
+    // results, or commands that do NOT appear here, the evidence is fabricated.
+    lines.push(
+      "",
+      "ACTION LOG — the submitter's actual tool calls and the real results they returned (GROUND TRUTH; trust this over the summary):",
+      "```",
+      actionLog.trim() ||
+        "(the submitter recorded no tool calls — it produced no verifiable work)",
+      "```",
+      "",
+      "Cross-check the submission against this log. Every claimed source, figure, or result MUST trace to a real tool result above. A claim with no backing action — e.g. cited sources that were never actually retrieved by web_search, or output never produced — is fabricated: request changes. If the task needed real work (a search, a build) and the log shows none, fail it.",
+    );
 
     if (coding) {
       lines.push(

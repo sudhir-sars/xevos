@@ -64,7 +64,12 @@ async function main(): Promise<void> {
     tools,
     promptSvc,
   );
-  const auditService = new AuditService(busSvc, taskRepo, agentRepo);
+  const auditService = new AuditService(
+    busSvc,
+    taskRepo,
+    agentRepo,
+    agentMemoryRepo,
+  );
 
   // Two-phase wiring: the trivial tools call these org operations DIRECTLY
   // (in-process, no bus round-trip) instead of publishing a request and parking

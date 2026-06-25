@@ -3,11 +3,12 @@
 > **OrgOS** — a runtime for building self-operating, AI-powered companies.
 
 `xevos` is a TypeScript implementation of the **Autonomous Agent Organization (AAO)**
-framework: a system for taking a single high-level directive ("grow revenue by
-launching Product X this quarter") and pursuing it autonomously — decomposing it
-into objectives, delegating work down a hierarchy of specialized agents, executing
-with tools, verifying its own output, tracking progress against measurable goals,
-and escalating to humans only when it should.
+framework: a system for taking a single high-level directive ("research the best
+AI startup ideas this quarter" / "build and ship Product X") and pursuing it
+autonomously — decomposing it into objectives, delegating work down a hierarchy of
+specialized agents, executing with real tools, **verifying its own output against
+what was actually done**, and reporting back to a human with the evidence and
+sources behind every claim.
 
 It is built on two hard assumptions:
 
@@ -18,133 +19,161 @@ It is built on two hard assumptions:
    and talk to the outside world without a human in the loop is exactly as risky as
    it is useful. Governance is a first-class layer, not a footnote.
 
-> **Status: early scaffolding.** The repository currently contains the project
-> skeleton (event bus, shared types, entrypoint). The architecture below is the
-> target this codebase is being built toward. See [Roadmap](#roadmap) for what
-> exists today versus what is planned.
+> **Status: working runtime + live dashboard.** The organization runs end to end
+> today — a principal talks to the executive, work flows down the hierarchy,
+> workers execute with tools, an independent Auditor verifies the result against
+> the agent's real actions, and everything streams to a web dashboard in real
+> time. The governance layer (budgets, approval gates, kill switch) is the next
+> milestone — see [Roadmap](#roadmap) for what exists today versus what is planned.
 
 ---
 
-## Concept
+## What's in the box
 
-The organization runs as a stack of layers on a shared substrate. Each layer is
-built on the ones beneath it.
+`xevos` is a pnpm monorepo with two packages:
+
+| Package        | What it is                                                                                                                 |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `@xevos/core`  | The runtime: the agent loop, the event bus, the role/department model, the tool layer, the stateless Auditor, persistence, and a WebSocket observer that taps every event. |
+| `@xevos/web`   | A Next.js dashboard that connects to the observer, seeds from a store snapshot, and streams the live event feed — the org's mission control and the principal's chat surface. |
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│  GOVERNANCE LAYER   budgets · approval gates · guardrails ·    │
+│  GOVERNANCE LAYER   budgets · approval gates · guardrails ·    │  ← designed; in progress
 │                     audit log · kill switch                    │
 ├────────────────────────────────────────────────────────────────┤
-│  ORGANIZATION LAYER CEO · Heads · Managers · ICs · Reviewers   │
-│                     decision rights · OKR tree                 │
+│  ORGANIZATION LAYER executive · heads · managers · workers ·   │  ← implemented
+│                     the static role ladder                     │
 ├────────────────────────────────────────────────────────────────┤
-│  COORDINATION LAYER message bus · task board · channels ·      │
-│                     escalation routing                         │
+│  VERIFICATION       independent stateless Auditor that judges  │  ← implemented
+│                     against real tool history & sandbox state  │
 ├────────────────────────────────────────────────────────────────┤
-│  AGENT RUNTIME      the perceive→reason→act→observe loop,      │
-│                     run per agent                              │
+│  COORDINATION LAYER event bus · mailboxes · direct vs bus     │  ← implemented
+│                     tools · escalation routing                 │
 ├────────────────────────────────────────────────────────────────┤
-│  SUBSTRATE          memory stores · tool registry · identity   │
-│                     & permissions · observability              │
+│  AGENT RUNTIME      the perceive→reason→act→observe loop,      │  ← implemented
+│                     one BaseAgent per seat                      │
+├────────────────────────────────────────────────────────────────┤
+│  SUBSTRATE          memory stores · tool registry · Docker     │  ← implemented
+│                     sandboxes · model pool · observability      │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-### Core ideas
+---
+
+## Core ideas
 
 - **Specialization beats generalization.** Each agent gets a narrow charter, a
-  focused system prompt, and a small toolset. A finance agent never sees the
-  codebase; an engineering IC never reasons about brand strategy.
+  focused system prompt, and a small toolset wired from its role and department.
 - **Hierarchy is context management.** Managers compress reality: they decompose
   goals into focused tasks on the way down and summarize results into status on
   the way up, so every agent operates on a relevant slice rather than the whole.
-- **Separate the doer from the checker.** Verification is a distinct Reviewer role,
-  so hallucinations and shortcuts are caught by an agent that didn't produce them.
-- **Every handoff is structured and evidenced.** Acceptance criteria flow down;
-  evidence of completion flows up. Free-text "here you go" handoffs are banned.
-- **Tie autonomy to blast radius.** Reversible, cheap, internal actions run fully
-  autonomously. Irreversible, expensive, or external actions require approval.
-- **Budgets are not optional.** Every agent and task carries token, cost, and
-  action ceilings; exhausting one triggers escalation, never silent continuation.
-- **Escalation is the universal safety valve.** An agent that is uncertain,
-  blocked, over budget, or facing a high-stakes action escalates rather than guesses.
+  This is what lets the org scale to long-running, multi-team programs that could
+  never fit in a single agent's context.
+- **Separate the doer from the checker.** Verification is a distinct, independent
+  Auditor that sits outside the reporting tree, so shortcuts and hallucinations are
+  caught by an agent that didn't produce them.
+- **Judge work against what actually happened — not the prose.** The Auditor reads
+  the submitter's real tool-call history (and, for code, the real sandbox) and
+  checks every claim against it. A cited source that was never retrieved, or output
+  that was never produced, fails.
+- **Every claim carries its provenance.** Sources flow up the hierarchy unchanged.
+  Summaries can be rewritten as they climb; the URLs behind them cannot.
+- **Tie autonomy to blast radius.** (Designed.) Reversible, cheap, internal actions
+  run autonomously; irreversible, expensive, or external actions require approval.
 
 ---
 
 ## The agent loop
 
-Every agent — from CEO to junior IC — is an instance of the same runtime,
-parameterized by a different charter, prompt, and toolset. Each time it runs, it
-executes one cycle:
+Every agent — from executive to junior worker — is one `BaseAgent`,
+parameterized by a different charter, prompt, and toolset. It owns a mailbox,
+blocks on the next event, and each time it wakes it runs one cycle:
 
-1. **Perceive** — the runtime assembles the agent's context: its charter, the
-   relevant slice of memory, its unread inbox, and the state of tasks it owns.
-2. **Reason** — a single LLM call decides what to do: take a tool action, send a
-   message, delegate a task, report status, or escalate.
-3. **Act** — the runtime executes each action _after_ checking it against the
-   agent's autonomy tier and budget. Over-tier or over-budget actions become
-   escalations instead of being executed.
-4. **Observe** — results are written back to memory and task records, becoming
-   part of the agent's context next cycle.
-
----
-
-## Roles
-
-| Role                        | Owns                                              | Notes                                                                                                |
-| --------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **CEO**                     | Vision, strategy, the top-level OKR tree          | Only agent that interfaces with the human board; only agent that changes the top objective.          |
-| **Marketing Head**          | Brand, demand gen, content, campaigns             | Approves outbound content up to its tier.                                                            |
-| **Finance Head**            | Budgeting, forecasting, spend approval            | Structural **spending gatekeeper** for the whole org; can trip the spending circuit breaker.         |
-| **Engineering Head**        | Product/technical roadmap, architecture, delivery | Approves architecture and staging deploys; production deploys are above solo authority.              |
-| **Managers**                | One project or team                               | The load-bearing role: decompose-and-delegate down, aggregate-and-report up.                         |
-| **Individual Contributors** | The actual work, using tools                      | Take one task at a time, self-check against acceptance criteria, attach evidence, submit for review. |
-| **Chief of Staff**          | Cross-cutting coordination                        | Runs the org-wide standup, routes cross-functional requests, maintains the dashboard.                |
-| **Reviewer / Critic**       | Independent verification                          | Structurally separate from producers; approves with evidence or returns with change requests.        |
-| **Human Liaison**           | The boundary to people                            | Every approval gate and high-stakes escalation flows through here.                                   |
+1. **Perceive** — the runtime assembles the agent's context: its persisted memory,
+   relevant warehouse recall, and the incoming event.
+2. **Reason** — a single LLM call decides what to do. Tools are the *only* channel
+   an agent communicates through, so every step calls a tool (`toolChoice: "required"`).
+3. **Act** — the runtime executes each action. *Direct* tools (create a task, spawn
+   a subordinate, edit a file) apply their effect in-process and return the real
+   result; *bus* tools (message, escalate, request review) publish a command and the
+   outcome arrives later as a correlated event.
+4. **Observe** — results are written back to memory, becoming part of the agent's
+   context next cycle. The loop ends only when the agent explicitly **yields**
+   (`wait_until_response`, `escalate_blocker`, or `request_review`).
 
 ---
 
-## Governance & autonomy tiers
+## Roles & departments
 
-Every action is classified by consequence; authorization scales with it. An
-agent's `autonomy_tier` is the highest class it may execute without approval.
+The org is a fixed ladder — each role spawns exactly the role one rung below it,
+and identity is **static**: an agent's objective, KPIs, and responsibilities come
+from its role, not from the task that spawned it, so it never drifts.
 
-| Tier | Action class                    | Examples                                       | Authorization                 |
-| ---- | ------------------------------- | ---------------------------------------------- | ----------------------------- |
-| 0    | Read-only / internal            | search memory, draft text, plan                | Fully autonomous              |
-| 1    | Reversible internal             | create a task, write an internal doc           | Autonomous within budget      |
-| 2    | Reversible external, low stakes | open a PR, run tests, prepare a draft          | Autonomous; logged + reviewed |
-| 3    | Costly or semi-reversible       | spend to a threshold, deploy to staging        | Functional Head approval      |
-| 4    | Irreversible / high stakes      | large spend, prod deploy, external/legal comms | **Human approval gate**       |
+| Role            | Owns                                                 | Spawns      |
+| --------------- | ---------------------------------------------------- | ----------- |
+| **Executive**   | The principal relationship; turning intent into objectives | Heads  |
+| **Head**        | One department's slice; the *what*, not the *how*    | Managers    |
+| **Manager**     | One initiative end-to-end; the spec and decomposition | Workers    |
+| **Worker**      | The actual work, using tools; submits for review     | (leaf)      |
 
-Backed by per-agent and per-task **budgets**, a **policy layer** in front of the
-tool registry, an immutable **audit log**, and a global **kill switch** that can
-freeze the whole org into a safe, resumable state.
+Spawn policy keeps the tree flat and bounded (max depth, per-agent fan-out, and a
+global agent ceiling). Departments — `organization`, `engineering`, `research`,
+`marketing`, `support`, `sales`, `legal` — decide each agent's toolset and system
+prompt. Only **engineering** workers get a Docker sandbox and the full file/bash
+toolset; only **research** workers get `web_search`.
+
+---
+
+## Verification & provenance
+
+The hardest part of an autonomous org isn't doing the work — it's *trusting* the
+work. `xevos` does this with a standalone, stateless **Auditor** that lives outside
+the hierarchy. A worker's `request_review` goes straight to it; it renders a binding
+PASS / CHANGES verdict and sends it to the worker's manager (who alone marks tasks
+complete).
+
+What makes the verdict trustworthy:
+
+- **Grounded in real actions.** For *every* submission the Auditor pulls the
+  submitter's actual tool-call history — the exact searches it ran and the sources
+  it really retrieved, the commands it really executed — and checks the report
+  against it. Fabricated citations, invented figures, and output that was never
+  produced are caught and rejected. This closes the gap where a reviewer could only
+  read the pasted prose and had no way to know whether it was real.
+- **Ground truth for code.** For an engineering task the Auditor attaches to the
+  submitter's sandbox, probes the real filesystem and git state, and re-runs the
+  build/tests itself. An empty workspace fails immediately, no matter what the
+  evidence claims.
+- **Provenance that survives the climb.** Findings are submitted with structured
+  **citations** (real title + URL). Those citations propagate **up the org
+  unchanged** — workers attach them, managers and heads carry them verbatim, and the
+  executive surfaces them to the principal — so any claim can be traced back to the
+  exact source it came from instead of dissolving into a summary.
+- **Usable web evidence.** `web_search` strips page chrome — nav menus, social-share
+  widgets, inline scripts, cookie banners — before returning results, so agents
+  reason over real article text and the budget isn't spent on boilerplate.
 
 ---
 
 ## Core schemas
 
-The data model is five schemas: **Agent**, **Message**, **Task**, **OKR**, and
-**Decision**. A working instance of the framework is those schemas, a generic
-agent runtime, the orchestration loop, the substrate services (bus, memory, tool
-registry, permissions, audit), and one charter + system prompt per role.
+The data model is a small set of schemas: **Agent**, **Task**, **Memory**, and the
+typed **Event** envelopes the bus carries. Every delegation carries acceptance
+criteria down; every completion carries evidence — and now sources — up.
 
 ```jsonc
-// Task — every delegation carries acceptance criteria down; every completion carries evidence up.
+// Task — acceptance criteria flow down; verified evidence flows up.
 {
-  "task_id": "T-1043",
-  "title": "Implement auth token refresh",
-  "parent": "objective:O-20",
-  "assigned_to": "eng-ic-004",
-  "acceptance_criteria": [
-    "tokens refresh transparently before expiry",
-    "tests pass",
+  "id": "task_1043",
+  "title": "Survey high-potential AI niches",
+  "assignedTo": "worker_research_1",
+  "acceptanceCriteria": [
+    "3–5 niches, each with a documented market gap",
+    "every niche backed by ≥2 real, retrieved sources"
   ],
-  "deliverable_spec": { "type": "pull_request", "location": "repo://app/auth" },
-  "budget": { "usd": 5, "tokens": 100000 },
   "status": "in_progress",
-  "review": { "reviewer": "qa-002", "verdict": null },
+  "review": { "auditor": "auditor_service", "verdict": null }
 }
 ```
 
@@ -156,39 +185,75 @@ This project uses **pnpm** (Node 24+, TypeScript with `strict` mode, ESM).
 
 ```bash
 pnpm install        # install dependencies
-pnpm dev            # run in watch mode (tsx)
-pnpm build          # compile to dist/
-pnpm typecheck      # type-check without emitting
-pnpm start          # run the compiled output
+pnpm dev            # run core + web together (watch mode)
+pnpm build          # build every package
+pnpm typecheck      # type-check the whole workspace
 pnpm test           # run the Node test runner
+```
+
+Run a single side if you prefer:
+
+```bash
+pnpm core:dev       # just the runtime
+pnpm web:dev        # just the dashboard (http://localhost:3000)
 ```
 
 > **pnpm only** — do not use `npm` or `yarn`.
 
+### Configuration
+
+The runtime reads configuration from the environment (a local `.env` is loaded
+automatically):
+
+| Variable                          | Purpose                                                                 |
+| --------------------------------- | ----------------------------------------------------------------------- |
+| `GOOGLE_GENERATIVE_AI_API_KEY`    | Single Google Gemini key (the default if no pool is set).               |
+| `GOOGLE_API_KEYS`                 | Comma-separated pool of keys (each a separate quota bucket) for higher aggregate throughput. |
+| `GEMINI_RPM_PER_KEY`              | Per-key requests/minute cap for the rate limiter (default `15`).        |
+| `MODEL_MAX_CONCURRENCY`           | Max in-flight model calls at once (defaults to the key count).          |
+| `EXA_API_KEY`                     | Enables the `web_search` tool (research workers). Absent → clean tool error. |
+| `XEVOS_OBSERVER_PORT`             | Port for the observer WebSocket + snapshot server (default `7077`).     |
+| `NEXT_PUBLIC_XEVOS_WS_URL` / `…_SNAPSHOT_URL` | Where the dashboard connects (defaults point at `127.0.0.1:7077`). |
+
+Engineering workers run inside **Docker** sandboxes, so a running Docker daemon is
+required for engineering work. `docker-compose.yml` is also provided for a local
+Qdrant instance for future vector-backed memory.
+
 ### Project layout
 
 ```
-src/
-  index.ts            # entrypoint
-  event-bus/          # the message bus — async fabric agents communicate over
-  types/              # shared types (branded IDs, schemas)
-dist/                 # compiled output (gitignored)
+apps/
+  web/                # Next.js dashboard: live event feed + principal chat
+packages/
+  core/
+    src/
+      index.ts        # entrypoint: wires repos, services, bus, observer
+      core/
+        agents/       # BaseAgent — the one agent, the perceive→act→observe loop
+        event-bus/    # in-memory mailboxes + broadcast taps
+        services/     # agent, task, memory, tool, and the Auditor (audit.ts)
+        sandbox/      # Docker sandbox for engineering workers
+      repositories/   # lowdb-backed Agent / Task / Memory / Prompt stores
+      observer/       # WebSocket server + store snapshot the dashboard consumes
+    storage/          # lowdb JSON stores (agents, tasks, memories, prompts)
 ```
 
 ---
 
 ## Roadmap
 
-The framework is being built bottom-up, substrate first.
+The framework is built bottom-up, substrate first.
 
-- [x] Project scaffolding (TypeScript, ESM, pnpm, test runner)
-- [ ] **Substrate** — message bus, tool registry, memory stores, permissions, audit log
-- [ ] **Core schemas** — Agent, Message, Task, OKR, Decision
-- [ ] **Agent runtime** — the perceive→reason→act→observe cycle
-- [ ] **Orchestration loop** — event-driven + scheduled, with concurrency & checkpointing
-- [ ] **Governance layer** — autonomy tiers, budgets, approval gates, kill switch
-- [ ] **Role charters & system prompts** — CEO, Heads, Managers, ICs, Reviewers
-- [ ] **Feedback loops** — task review, project re-planning, KPI tracking, post-mortems
+- [x] **Substrate** — event bus, tool registry, memory stores, Docker sandboxes, model pool
+- [x] **Core schemas** — Agent, Task, Memory, typed Events
+- [x] **Agent runtime** — the perceive→reason→act→observe cycle
+- [x] **Role ladder & charters** — executive, heads, managers, workers + per-department prompts
+- [x] **Independent verification** — stateless Auditor grounded in real tool history and sandbox state
+- [x] **Citation provenance** — structured sources that flow up the org unchanged
+- [x] **Observability** — WebSocket event tap + live web dashboard
+- [ ] **Governance layer** — budgets, autonomy tiers, approval gates, kill switch
+- [ ] **Durability** — persisted event log, crash recovery, resumable runs
+- [ ] **Feedback loops** — task re-planning, KPI tracking, post-mortems
 
 ### Maturity model
 
@@ -196,7 +261,7 @@ Autonomy is grown in three stages, not switched on day one:
 
 1. **Crawl — human-supervised.** Agents propose; humans approve nearly everything.
 2. **Walk — human-on-the-loop.** Agents act on reversible/low-stakes work; humans review by exception.
-3. **Run — human-in-the-loop for high stakes only.** The org self-corrects; humans engage at Tier-4 gates and on strategy.
+3. **Run — human-in-the-loop for high stakes only.** The org self-corrects; humans engage at high-stakes gates and on strategy.
 
 ---
 
