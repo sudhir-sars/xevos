@@ -1,18 +1,112 @@
+# Local infrastructure for xevos.
+#
+# Convex is self-hosted here (no cloud bill): a reactive backend + dashboard,
+# storing all state in a local SQLite database on a named volume. Resource
+# limits are sized for a ~24 GB / 6-core dev machine, leaving plenty of headroom
+# for the agent runtime and the engineering Docker sandboxes.
+#
+# Quick start:
+#   docker compose up -d
+#   docker compose exec backend ./generate_admin_key.sh   # -> admin key
+# Then in packages/core/.env.local (do NOT commit):
+#   CONVEX_SELF_HOSTED_URL=http://127.0.0.1:3210
+#   CONVEX_SELF_HOSTED_ADMIN_KEY=<key from the command above>
+#   npx convex dev
+#
+# Endpoints:
+#   backend API     -> http://127.0.0.1:3210
+#   HTTP actions    -> http://127.0.0.1:3211
+#   dashboard       -> http://127.0.0.1:6791
+#
+# To pin a version instead of tracking latest, set REV in a .env file next to
+# this one and change the image tags to :${REV}.
+
 services:
+  # ---- Convex self-hosted backend (reactive DB; SQLite on the `convex_data` volume) ----
+  backend:
+    image: ghcr.io/get-convex/convex-backend:latest
+    container_name: convex-backend
+    restart: unless-stopped
+    stop_grace_period: 10s
+    stop_signal: SIGINT
+    ports:
+      - "${PORT:-3210}:3210"
+      - "${SITE_PROXY_PORT:-3211}:3211"
+    volumes:
+      - convex_data:/convex/data
+    environment:
+      # Origins the backend advertises; default to localhost for a dev box.
+      - CONVEX_CLOUD_ORIGIN=${CONVEX_CLOUD_ORIGIN:-http://127.0.0.1:${PORT:-3210}}
+      - CONVEX_SITE_ORIGIN=${CONVEX_SITE_ORIGIN:-http://127.0.0.1:${SITE_PROXY_PORT:-3211}}
+      # Set these in a .env file to keep the generated admin key stable across
+      # restarts; if unset the backend uses local dev defaults.
+      - INSTANCE_NAME=${INSTANCE_NAME:-xevos}
+      - INSTANCE_SECRET
+      # Self-host hygiene: no phone-home, no public metrics endpoint.
+      - DISABLE_BEACON=${DISABLE_BEACON:-true}
+      - DISABLE_METRICS_ENDPOINT=${DISABLE_METRICS_ENDPOINT:-true}
+      - RUST_LOG=${RUST_LOG:-info}
+      # Keep ~2 days of document history (tombstone retention) by default.
+      - DOCUMENT_RETENTION_DELAY=${DOCUMENT_RETENTION_DELAY:-172800}
+      # Concurrency caps (raise if the org gets busy and the host can take it).
+      - APPLICATION_MAX_CONCURRENT_MUTATIONS=${APPLICATION_MAX_CONCURRENT_MUTATIONS:-16}
+      - APPLICATION_MAX_CONCURRENT_QUERIES=${APPLICATION_MAX_CONCURRENT_QUERIES:-16}
+      - APPLICATION_MAX_CONCURRENT_V8_ACTIONS=${APPLICATION_MAX_CONCURRENT_V8_ACTIONS:-16}
+      - APPLICATION_MAX_CONCURRENT_NODE_ACTIONS=${APPLICATION_MAX_CONCURRENT_NODE_ACTIONS:-16}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3210/version"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "3.0"
+          memory: 6g
+        reservations:
+          memory: 512m
+
+  # ---- Convex dashboard (web UI for data, logs, functions) ----
+  dashboard:
+    image: ghcr.io/get-convex/convex-dashboard:latest
+    container_name: convex-dashboard
+    restart: unless-stopped
+    stop_grace_period: 10s
+    stop_signal: SIGINT
+    ports:
+      - "${DASHBOARD_PORT:-6791}:6791"
+    environment:
+      - NEXT_PUBLIC_DEPLOYMENT_URL=${NEXT_PUBLIC_DEPLOYMENT_URL:-http://127.0.0.1:${PORT:-3210}}
+    depends_on:
+      backend:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1g
+
+  # ---- Qdrant (vector store, reserved for future vector-backed memory) ----
   qdrant:
     image: qdrant/qdrant:latest
     container_name: qdrant
     restart: unless-stopped
-
     ports:
       - "6333:6333"
       - "6334:6334"
-
     volumes:
       - ./qdrant_storage:/qdrant/storage
-
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:6333/"]
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 3g
+
+volumes:
+  convex_data:
