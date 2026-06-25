@@ -57,14 +57,14 @@ It is built on two hard assumptions:
 │  VERIFICATION       independent stateless Auditor that judges  │  ← implemented
 │                     against real tool history & sandbox state  │
 ├────────────────────────────────────────────────────────────────┤
-│  COORDINATION LAYER event bus · mailboxes · direct vs bus     │  ← implemented
+│  COORDINATION LAYER event bus · mailboxes · direct vs bus      │  ← implemented
 │                     tools · escalation routing                 │
 ├────────────────────────────────────────────────────────────────┤
 │  AGENT RUNTIME      the perceive→reason→act→observe loop,      │  ← implemented
-│                     one BaseAgent per seat                      │
+│                     one BaseAgent per seat                     │
 ├────────────────────────────────────────────────────────────────┤
 │  SUBSTRATE          memory stores · tool registry · Docker     │  ← implemented
-│                     sandboxes · model pool · observability      │
+│                     sandboxes · model pool · observability     │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -119,12 +119,12 @@ The org is a fixed ladder — each role spawns exactly the role one rung below i
 and identity is **static**: an agent's objective, KPIs, and responsibilities come
 from its role, not from the task that spawned it, so it never drifts.
 
-| Role            | Owns                                                 | Spawns      |
-| --------------- | ---------------------------------------------------- | ----------- |
-| **Executive**   | The principal relationship; turning intent into objectives | Heads  |
-| **Head**        | One department's slice; the *what*, not the *how*    | Managers    |
-| **Manager**     | One initiative end-to-end; the spec and decomposition | Workers    |
-| **Worker**      | The actual work, using tools; submits for review     | (leaf)      |
+| Role            | Owns                                                       | Spawns      |
+| --------------- | ---------------------------------------------------------- | ----------- |
+| **Executive**   | The principal relationship; turning intent into objectives | Heads       |
+| **Head**        | One department's slice; the *what*, not the *how*          | Managers    |
+| **Manager**     | One initiative end-to-end; the spec and decomposition      | Workers     |
+| **Worker**      | The actual work, using tools; submits for review           | (leaf)      |
 
 Spawn policy keeps the tree flat and bounded (max depth, per-agent fan-out, and a
 global agent ceiling). Departments — `organization`, `engineering`, `research`,
@@ -214,15 +214,15 @@ pnpm web:dev        # just the dashboard (http://localhost:3000)
 The runtime reads configuration from the environment (a local `.env` is loaded
 automatically):
 
-| Variable                          | Purpose                                                                 |
-| --------------------------------- | ----------------------------------------------------------------------- |
-| `GOOGLE_GENERATIVE_AI_API_KEY`    | Single Google Gemini key (the default if no pool is set).               |
+| Variable                          | Purpose                                                                                      |
+| --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `GOOGLE_GENERATIVE_AI_API_KEY`    | Single Google Gemini key (the default if no pool is set).                                    |
 | `GOOGLE_API_KEYS`                 | Comma-separated pool of keys (each a separate quota bucket) for higher aggregate throughput. |
-| `GEMINI_RPM_PER_KEY`              | Per-key requests/minute cap for the rate limiter (default `15`).        |
-| `MODEL_MAX_CONCURRENCY`           | Max in-flight model calls at once (defaults to the key count).          |
-| `EXA_API_KEY`                     | Enables the `web_search` tool (research workers). Absent → clean tool error. |
-| `XEVOS_OBSERVER_PORT`             | Port for the observer WebSocket + snapshot server (default `7077`).     |
-| `NEXT_PUBLIC_XEVOS_WS_URL` / `…_SNAPSHOT_URL` | Where the dashboard connects (defaults point at `127.0.0.1:7077`). |
+| `GEMINI_RPM_PER_KEY`              | Per-key requests/minute cap for the rate limiter (default `15`).                             |
+| `MODEL_MAX_CONCURRENCY`           | Max in-flight model calls at once (defaults to the key count).                               |
+| `EXA_API_KEY`                     | Enables the `web_search` tool (research workers). Absent → clean tool error.                 |
+| `XEVOS_OBSERVER_PORT`             | Port for the observer WebSocket + snapshot server (default `7077`).                          |
+| `NEXT_PUBLIC_XEVOS_WS_URL` / `…_SNAPSHOT_URL` | Where the dashboard connects (defaults point at `127.0.0.1:7077`).               |
 
 Engineering workers run inside **Docker** sandboxes, so a running Docker daemon is
 required for engineering work. `docker-compose.yml` is also provided for a local
