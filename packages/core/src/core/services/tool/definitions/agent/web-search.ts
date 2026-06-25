@@ -11,9 +11,9 @@ const inputSchema = z.object({
 
 type Input = z.infer<typeof inputSchema>;
 
-const NUM_RESULTS = 5;
+const NUM_RESULTS = 10;
 /** Per-result snippet cap, so a search turn doesn't flood the agent's context. */
-const MAX_TEXT_CHARS = 1200;
+const MAX_TEXT_CHARS = 12000;
 
 // Built lazily so a missing key surfaces as a clean tool error rather than
 // crashing at module load.

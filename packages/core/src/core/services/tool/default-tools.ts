@@ -11,7 +11,6 @@ const BASE_TOOLS = [
   "update_task_status",
   "wait_until_response",
   "get_status",
-  "web_search",
 ] as const satisfies readonly ToolName[];
 
 // Leaders (executive, head) staff the next tier and delegate by handing down an
@@ -24,15 +23,17 @@ const STAFFING_TOOLS = [
 ] as const satisfies readonly ToolName[];
 
 // A manager additionally owns its initiative's task board: it is the only tier
-// that can create tasks and assign them to the workers that execute them.
+// that can create tasks — and creating one assigns it to a worker atomically
+// (create_and_assign_task), so a task is never left ownerless.
 const MANAGEMENT_TOOLS = [
-  "create_task",
-  "assign_task",
+  "create_and_assign_task",
   ...STAFFING_TOOLS,
 ] as const satisfies readonly ToolName[];
 
 export const ROLE_TOOLS = {
-  worker: ["request_review", ...BASE_TOOLS],
+  // Only workers do hands-on investigation, so web_search lives here — heads and
+  // managers define and delegate rather than researching personally.
+  worker: ["request_review", "web_search", ...BASE_TOOLS],
   manager: [...MANAGEMENT_TOOLS],
   head: [...STAFFING_TOOLS],
   executive: ["respond_to_principal", ...STAFFING_TOOLS],

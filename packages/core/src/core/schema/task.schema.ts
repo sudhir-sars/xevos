@@ -64,7 +64,7 @@ export const taskSchema = z.object({
   status: taskStatusSchema,
   // Tolerant of fabricated ids: an LLM often invents a placeholder like
   // "task_initialization" before any real task exists. Rather than failing the
-  // whole create_task call, drop anything that isn't a valid task id.
+  // whole create_and_assign_task call, drop anything that isn't a valid task id.
   referceTask: z.array(taskIdSchema).catch([]).nullable(),
   review: reviewSchema.nullable(),
   title: z.string(),
@@ -98,6 +98,7 @@ export const taskCreateSchema = taskSchema.pick({
   acceptanceCriteria: true,
   dependencies: true,
   priority: true,
+  assignedTo: true,
   deadline: true,
   budget: true,
 });

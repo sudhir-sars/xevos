@@ -8,11 +8,9 @@ import { getStatus } from "./get-status";
 import { respondToPrincipal } from "./respond-to-principal";
 import { waitUntilResponse } from "./wait-until-response";
 import { webSearch } from "./web-search";
-import { assignTask } from "./assign-task";
 
 /** Communication, coordination, and organization tools. */
 export const agentDefinitions = [
-  assignTask,
   sendMessage,
   requestInformation,
   escalateBlocker,

@@ -11,6 +11,10 @@ export interface TaskCreateRequestEvent extends BaseEvent {
   topic: "task";
   type: "task_create_request";
 
+  // Creation and assignment are one atomic act: the spec carries `assignedTo`,
+  // so a task is never born ownerless. The service creates it already
+  // `assigned` and delegates to that agent in the same step — eliminating the
+  // create-then-assign race and the "owned by whoever transitioned it" bug.
   body: TaskCreate;
 }
 

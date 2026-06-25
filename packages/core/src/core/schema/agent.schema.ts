@@ -85,4 +85,22 @@ export const agentCreateSchema = agentSchema.pick({
 });
 
 export type AgentCreate = z.infer<typeof agentCreateSchema>;
+
+/**
+ * What a creator actually DECIDES when spawning a subordinate: nothing, except
+ * — for the executive only — which department the new head belongs to. The role
+ * is fixed by the ladder (each level spawns the one below it), and everything
+ * else (objective, kpis, responsibilities, tools, reporting line, status) is
+ * STATIC and set by the system. So a non-executive passes no input at all, and
+ * an agent's identity can never drift with the task that spawned it.
+ */
+export const agentSpawnSchema = z.object({
+  department: departmentSchema
+    .optional()
+    .describe(
+      "Executive only: the department for the new head. Omit it otherwise — subordinates inherit your department.",
+    ),
+});
+
+export type AgentSpawn = z.infer<typeof agentSpawnSchema>;
 export type Agent = z.infer<typeof agentSchema>;

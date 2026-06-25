@@ -1,7 +1,8 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import type { LanguageModel } from "ai";
 import { Department, Role } from "./schema";
-
+const MODEL_ID = "gemini-3.1-flash-lite";
+const RPM_PER_KEY = Number(process.env.GEMINI_RPM_PER_KEY ?? 15);
 /**
  * A pool of Google providers, one per API key. Each key here belongs to a
  * DIFFERENT Google account, so each has its own independent free-tier quota
@@ -26,8 +27,6 @@ const providers = (
 /** Number of API keys (independent quota buckets) in the pool. */
 export const API_KEY_COUNT = providers.length;
 
-const MODEL_ID = "gemini-3.1-flash-lite";
-
 /** All roles use one model today; kept role-aware for easy future tiering. */
 function modelIdFor(_role: Role): string {
   return MODEL_ID;
@@ -49,7 +48,7 @@ function modelIdFor(_role: Role): string {
  * (1,000 per key per day) is the real ceiling for long runs — with N keys that
  * is N * 1,000 requests/day before everything stalls until the daily reset.
  */
-const RPM_PER_KEY = Number(process.env.GEMINI_RPM_PER_KEY ?? 15);
+
 const RPM_SAFETY = 0.9; // stay a touch under the published cap to absorb jitter
 const MIN_INTERVAL_MS = Math.ceil(
   60_000 / Math.max(1, RPM_PER_KEY * RPM_SAFETY),

@@ -43,11 +43,12 @@ export class TaskRepository {
     const record: Task = {
       id: `task_${this.db.data.nextTaskId++}` as TaskId,
 
-      status: "backlog",
+      // Born already assigned: creation and assignment are atomic (the spec
+      // carries `assignedTo`), so a task never sits in `backlog` waiting for a
+      // separate assign step.
+      status: "assigned",
 
       review: null,
-
-      assignedTo: null,
 
       createdAt: now,
       updatedAt: now,

@@ -53,9 +53,10 @@ const initialState: StreamState = {
 };
 
 /**
- * Response event types that imply a store mutation, and so warrant refreshing
- * the snapshot (the bus carries request/response signals, not full state
- * deltas, so panels reflecting the stores are refetched rather than patched).
+ * Event types that imply a store mutation, and so warrant refreshing the
+ * snapshot (the bus carries signals, not full state deltas, so panels reflecting
+ * the stores are refetched rather than patched). These are the legacy bus
+ * request/response signals — still handled in case any path uses them.
  */
 const STORE_MUTATING: ReadonlySet<Event["type"]> = new Set<Event["type"]>([
   "task_create_response",
@@ -66,6 +67,27 @@ const STORE_MUTATING: ReadonlySet<Event["type"]> = new Set<Event["type"]>([
   "agent_resume_response",
   "agent_termination_response",
 ]);
+
+/**
+ * TRIVIAL tools now apply their effect DIRECTLY (no bus request/response) and
+ * announce it with a `tool_executed` observation event instead. These tool names
+ * change the lowdb stores (agents/tasks), so an observation for any of them must
+ * also trigger a snapshot refresh. (Coding tools mutate the sandbox, not the
+ * stores, so they are intentionally excluded.)
+ */
+const STORE_MUTATING_TOOLS: ReadonlySet<string> = new Set([
+  "create_subordinate_agent",
+  "create_and_assign_task",
+  "update_task_status",
+]);
+
+/** Whether an event implies a store change the snapshot panels should reflect. */
+function mutatesStore(event: Event): boolean {
+  if (STORE_MUTATING.has(event.type)) return true;
+  return (
+    event.type === "tool_executed" && STORE_MUTATING_TOOLS.has(event.body.tool)
+  );
+}
 
 function reducer(state: StreamState, action: Action): StreamState {
   switch (action.type) {
@@ -162,7 +184,7 @@ export function useXevosStream(): XevosStream {
           item: { seq: frame.seq, ts: frame.ts, event: frame.event },
         });
 
-        if (STORE_MUTATING.has(frame.event.type)) scheduleRefresh();
+        if (mutatesStore(frame.event)) scheduleRefresh();
       };
 
       socket.onclose = () => {

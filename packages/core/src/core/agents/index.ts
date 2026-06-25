@@ -9,6 +9,7 @@ import type { TaskRepository } from "../../repositories";
 import { DockerSandbox } from "../sandbox";
 import { withModel } from "../utils";
 import { ToolDefinition } from "../services/tool/definitions";
+import { google } from "@ai-sdk/google";
 
 /**
  * The one agent in the system.
@@ -140,7 +141,6 @@ export class BaseAgent {
               hasToolCall("wait_until_response"),
               hasToolCall("escalate_blocker"),
               hasToolCall("request_review"),
-              hasToolCall("respond_to_principal"),
             ],
           }),
       );
@@ -183,9 +183,16 @@ export class BaseAgent {
   }
 
   private async prepareSandbox(): Promise<void> {
-    if (!this.sandbox || this.prepared) return;
+    if (!this.sandbox) return;
 
+    // Ensure the container is running on EVERY turn — start() is idempotent.
+    // The Auditor pauses the worker's container after a review, so gating this
+    // behind `prepared` would leave a stopped sandbox that rework can't exec
+    // into after a changes_requested verdict.
     await this.sandbox.start();
+
+    if (this.prepared) return;
+
     const branch = this.sandbox.name;
 
     const inRepo =

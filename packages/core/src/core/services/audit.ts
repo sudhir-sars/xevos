@@ -11,6 +11,7 @@ import {
 import { z } from "zod";
 
 import type {
+  EndpointId,
   Event,
   ReviewPresentationRequestEvent,
   ReviewPresentationResponseEvent,
@@ -18,7 +19,7 @@ import type {
   ServiceId,
   Task,
 } from "../schema";
-import type { TaskRepository } from "../../repositories";
+import type { AgentRepository, TaskRepository } from "../../repositories";
 
 import { type EventBus, type Mailbox } from "../event-bus";
 import { DockerSandbox } from "../sandbox";
@@ -62,6 +63,7 @@ export class AuditService {
   constructor(
     private readonly bus: EventBus,
     private readonly tasks: TaskRepository,
+    private readonly agents: AgentRepository,
   ) {
     this.mailbox = bus.subscribe(AUDITOR_ID);
   }
@@ -122,7 +124,39 @@ export class AuditService {
       }
     }
 
-    const verdict = await this.assess(event, task, sandbox, coding);
+    // Pull ground truth straight from the worker's container, so the verdict is
+    // judged against what is REALLY there — not the (possibly fabricated) text
+    // evidence. If a coding worker left the workspace empty, it never actually
+    // built anything: fail immediately, no LLM review needed.
+    let groundTruth = "";
+    let emptyWorkspace = false;
+    if (sandbox) {
+      try {
+        const probe = await sandbox.exec(
+          "find . -type f -not -path './node_modules/*' -not -path './.git/*' 2>/dev/null | wc -l; echo '===TREE==='; ls -la; echo '===GIT==='; git log --oneline -10 2>/dev/null || echo '(no commits)'",
+        );
+        groundTruth = probe.stdout;
+        const fileCount = Number.parseInt(
+          probe.stdout.split("\n")[0]?.trim() ?? "0",
+          10,
+        );
+        emptyWorkspace = Number.isFinite(fileCount) && fileCount === 0;
+      } catch (error) {
+        console.error(
+          `[auditor] could not probe workspace for ${submitter}`,
+          error,
+        );
+      }
+    }
+
+    const verdict =
+      coding && emptyWorkspace
+        ? {
+            verdict: "changes_requested" as ReviewVerdict,
+            notes:
+              "The workspace is empty — no source files were produced. The submitted evidence cannot be trusted over an empty sandbox: the task was not actually built. Do the real work in the sandbox, commit it, and resubmit.",
+          }
+        : await this.assess(event, task, sandbox, coding, groundTruth);
 
     // Bug 3 fix: pause the sandbox after assessment — we resumed it, so we
     // should return it to a paused state. Never destroy: it belongs to the worker.
@@ -137,21 +171,29 @@ export class AuditService {
       }
     }
 
-    // The Auditor owns "done": a pass completes the task; changes requested
-    // sends it back so the worker can rework and resubmit.
-    if (task) {
-      await this.tasks.update(task.id, {
-        status: verdict.verdict === "approved" ? "completed" : "in_progress",
-      });
+    // The Auditor renders the binding verdict but does NOT change task state.
+    // Marking a task completed is the MANAGER's authority alone — never the
+    // Auditor's and never the worker's. So the verdict is delivered to the
+    // task's manager (the assignee's reportsTo), who completes it on PASS or
+    // relays the findings to the worker on CHANGES. (With no task we fall back
+    // to replying to the submitter.)
+    let recipient: EndpointId = submitter;
+    if (task?.assignedTo) {
+      try {
+        recipient = this.agents.get(task.assignedTo).reportsTo;
+      } catch (error) {
+        console.error(
+          `[auditor] could not resolve manager for ${task.assignedTo}`,
+          error,
+        );
+      }
     }
 
-    // Reply straight to the worker that asked (only workers know the Auditor).
     const response: Omit<ReviewPresentationResponseEvent, "id"> = {
       source: AUDITOR_ID,
-      target: submitter,
+      target: recipient,
       topic: "agent",
       type: "review_presentation_response",
-      correlationId: event.id,
       body: {
         summary: `${
           verdict.verdict === "approved" ? "PASS" : "CHANGES REQUESTED"
@@ -168,6 +210,7 @@ export class AuditService {
     task: Task | null,
     sandbox: DockerSandbox | undefined,
     coding: boolean,
+    groundTruth: string,
   ): Promise<{ verdict: ReviewVerdict; notes: string }> {
     let captured: { verdict: ReviewVerdict; notes: string } | null = null;
 
@@ -204,7 +247,10 @@ export class AuditService {
     }
 
     const messages: ModelMessage[] = [
-      { role: "user", content: this.buildReviewPrompt(event, task, coding) },
+      {
+        role: "user",
+        content: this.buildReviewPrompt(event, task, coding, groundTruth),
+      },
     ];
 
     await withModel("organization", "manager", (model) =>
@@ -235,6 +281,7 @@ export class AuditService {
     event: ReviewPresentationRequestEvent,
     task: Task | null,
     coding: boolean,
+    groundTruth: string,
   ): string {
     const lines: string[] = [
       `${event.source} has submitted work for your review${
@@ -262,6 +309,16 @@ export class AuditService {
         "",
         "This is a CODING task. You have sandbox tools (bash, read_file, list_dir, glob, grep, …) attached to the submitter's workspace at /workspace. Inspect the code and re-run the build/tests yourself before deciding. Inspect only — do not modify their work.",
       );
+
+      if (groundTruth.trim()) {
+        lines.push(
+          "",
+          "Actual current state of the workspace, read directly from the container (GROUND TRUTH — trust this over the summary; if it contradicts the evidence, the evidence is fabricated):",
+          "```",
+          groundTruth.trim(),
+          "```",
+        );
+      }
     }
 
     lines.push("", "When done, call record_verdict with your decision.");

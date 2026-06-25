@@ -8,13 +8,26 @@ import type { MemoryService } from "../memory";
 
 import { ToolRegistry } from "./registry";
 import { ToolExecutor } from "./executor";
-import type { PrincipalSink, ToolContext, ToolResult } from "./ztypes";
+import {
+  observe,
+  type OrgOps,
+  type PrincipalSink,
+  type ToolContext,
+  type ToolResult,
+} from "./ztypes";
 
 export const TOOL_SERVICE_ID: ServiceId = "tool_service";
 
 export class ToolService {
   private readonly registry = new ToolRegistry();
   private readonly executor: ToolExecutor;
+
+  /**
+   * Direct, in-process org operations the TRIVIAL tools call instead of
+   * round-tripping the bus. Bound after construction (the services that back it
+   * depend on this ToolService, so the wiring is necessarily two-phase).
+   */
+  private org?: OrgOps;
 
   constructor(
     private readonly bus: EventBus,
@@ -24,6 +37,11 @@ export class ToolService {
     private readonly principalSink: PrincipalSink = defaultPrincipalSink,
   ) {
     this.executor = new ToolExecutor(bus, memory, tasks, agents, principalSink);
+  }
+
+  /** Wire the direct org operations once the backing services exist. */
+  setOrgOps(org: OrgOps): void {
+    this.org = org;
   }
 
   /**
@@ -41,6 +59,7 @@ export class ToolService {
       tasks: this.tasks,
       agents: this.agents,
       principalSink: this.principalSink,
+      org: this.org,
     };
 
     const tools: ToolSet = {};
@@ -48,7 +67,18 @@ export class ToolService {
     for (const def of this.registry.resolve(agent, sandbox)) {
       tools[def.name] = {
         ...def.tool,
-        execute: (input: unknown) => def.handler(ctx, input as any),
+        execute: async (input: unknown) => {
+          const result = await def.handler(ctx, input as any);
+
+          // TRIVIAL tools applied their effect directly (no bus round-trip) —
+          // emit a fire-and-forget observation so the action is still visible
+          // on the bus for accountability and transparency.
+          if (def.direct) {
+            observe(this.bus, agent, def.name, input, result);
+          }
+
+          return result;
+        },
       } as ToolSet[string];
     }
 

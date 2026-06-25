@@ -64,7 +64,18 @@ async function main(): Promise<void> {
     tools,
     promptSvc,
   );
-  const auditService = new AuditService(busSvc, taskRepo);
+  const auditService = new AuditService(busSvc, taskRepo, agentRepo);
+
+  // Two-phase wiring: the trivial tools call these org operations DIRECTLY
+  // (in-process, no bus round-trip) instead of publishing a request and parking
+  // on wait_until_response. The backing services depend on `tools`, so the link
+  // is set after they exist.
+  tools.setOrgOps({
+    createAgent: (creatorId, spec) => agentService.create(creatorId, spec),
+    createTask: (source, spec) => taskService.create(source, spec),
+    transitionTask: (source, id, to, note) =>
+      taskService.transition(source, id, to, note),
+  });
 
   taskService.start();
   agentService.start();

@@ -12,15 +12,15 @@
           "content": [
             {
               "type": "tool-call",
-              "toolCallId": "szLIxGFJ",
+              "toolCallId": "U9Kyj4Eq",
               "toolName": "respond_to_principal",
               "input": {
-                "message": "Hello! I'm ready to help. What can I do for you today?",
-                "rationale": "Acknowledge the principal's greeting as per the instructions."
+                "message": "Hi! It's great to hear from you. I'm ready to help you with whatever you need—what are we working on today?",
+                "rationale": "Acknowledging the principal's greeting to initiate the interaction and establish a helpful, professional tone."
               },
               "providerOptions": {
                 "google": {
-                  "thoughtSignature": "EjQKMgEMOdbHvt/WZJCYhN/R7gauW2eQ+W1YRj1cLuurZ88rwu2OFz455NkMx7XMTmdyOpu1"
+                  "thoughtSignature": "EjQKMgEMOdbHkBbcW9q3UGMEcwjoxyMQT1xM7hmxYnhF95VGdrz1B2z9LbR+U4isfZ+nzIrK"
                 }
               }
             }
@@ -31,7 +31,7 @@
           "content": [
             {
               "type": "tool-result",
-              "toolCallId": "szLIxGFJ",
+              "toolCallId": "U9Kyj4Eq",
               "toolName": "respond_to_principal",
               "output": {
                 "type": "json",
@@ -44,7 +44,49 @@
               },
               "providerOptions": {
                 "google": {
-                  "thoughtSignature": "EjQKMgEMOdbHvt/WZJCYhN/R7gauW2eQ+W1YRj1cLuurZ88rwu2OFz455NkMx7XMTmdyOpu1"
+                  "thoughtSignature": "EjQKMgEMOdbHkBbcW9q3UGMEcwjoxyMQT1xM7hmxYnhF95VGdrz1B2z9LbR+U4isfZ+nzIrK"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "amExw0mh",
+              "toolName": "wait_until_response",
+              "input": {
+                "rationale": "Waiting for the principal to provide a directive."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHNd6anxPr4AWpb7d4wXCgQ61qvsHLolh5Jo6zY0k/7te9OIa9kunRNJSUgWiy"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "amExw0mh",
+              "toolName": "wait_until_response",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "idle"
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHNd6anxPr4AWpb7d4wXCgQ61qvsHLolh5Jo6zY0k/7te9OIa9kunRNJSUgWiy"
                 }
               }
             }
@@ -52,22 +94,22 @@
         },
         {
           "role": "user",
-          "content": "[agent/message]\nFrom principal:{\n  \"content\": \"i need an ai powered todo app\"\n}"
+          "content": "[agent/message]\nFrom principal:{\n  \"content\": \"we need an idea more of an start up idea\"\n}"
         },
         {
           "role": "assistant",
           "content": [
             {
               "type": "tool-call",
-              "toolCallId": "5iLe8hpy",
+              "toolCallId": "8KkRkDRA",
               "toolName": "respond_to_principal",
               "input": {
-                "message": "That's a great project! I'll get an engineering team started on building an AI-powered todo app for you right away. I'll keep you updated on our progress.",
-                "rationale": "Acknowledge the principal's request for an AI-powered todo app before taking any other action."
+                "message": "I'd love to help you brainstorm! To make sure we land on something that really resonates with you, could you tell me a little more about what excites you? \n\n1. Are there particular industries or problems that you're passionate about solving?\n2. Do you have a preference for the type of impact you want to have (e.g., consumer-facing apps, enterprise tools, social good, etc.)?\n3. What does \"success\" look like to you for this startup—is it rapid growth, building something sustainable, or focusing on a specific niche?",
+                "rationale": "The principal is looking for a startup idea. I need to understand their interests and goals better to provide relevant and high-value suggestions."
               },
               "providerOptions": {
                 "google": {
-                  "thoughtSignature": "EjQKMgEMOdbHPigAN5ed4n01IVriWBMPwdfhkV+iB+3cCVXsLYAPn/tDHm9T+KzznGgyrBaM"
+                  "thoughtSignature": "EjQKMgEMOdbHp6DTfCIzoxYU+AOROCanZn00KPlVpGB0Bkt84cmY5R3J/o36md2LMy1G7p/G"
                 }
               }
             }
@@ -78,7 +120,7 @@
           "content": [
             {
               "type": "tool-result",
-              "toolCallId": "5iLe8hpy",
+              "toolCallId": "8KkRkDRA",
               "toolName": "respond_to_principal",
               "output": {
                 "type": "json",
@@ -91,14 +133,1350 @@
               },
               "providerOptions": {
                 "google": {
-                  "thoughtSignature": "EjQKMgEMOdbHPigAN5ed4n01IVriWBMPwdfhkV+iB+3cCVXsLYAPn/tDHm9T+KzznGgyrBaM"
+                  "thoughtSignature": "EjQKMgEMOdbHp6DTfCIzoxYU+AOROCanZn00KPlVpGB0Bkt84cmY5R3J/o36md2LMy1G7p/G"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "USAasaGg",
+              "toolName": "wait_until_response",
+              "input": {
+                "rationale": "Waiting for the principal's input on their interests and goals to shape the startup idea."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHUNpkncl8uJHuTWjhECYY5Qo09LoFWy6DK11mcFYVN1wb5cf2UiBeewjf89bm"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "USAasaGg",
+              "toolName": "wait_until_response",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "idle"
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHUNpkncl8uJHuTWjhECYY5Qo09LoFWy6DK11mcFYVN1wb5cf2UiBeewjf89bm"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": "[agent/message]\nFrom principal:{\n  \"content\": \"soem Ai tool if\"\n}"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "QbggWfzf",
+              "toolName": "respond_to_principal",
+              "input": {
+                "message": "Got it—an AI tool it is! That's a great space to explore. \n\nTo help me narrow down the best opportunities, could you share a bit more:\n\n1. Are you interested in AI for personal productivity, B2B workflows, or perhaps something creative/generative?\n2. Is there a specific \"pain point\" you've noticed in your own life or work that you think AI could fix? \n\nOnce I have a sense of the direction, I'll get our research team on it to flesh out some high-potential concepts for you.",
+                "rationale": "The principal specified an interest in AI. I need to clarify the domain (productivity, B2B, etc.) and identify any personal pain points to focus the ideation process effectively."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHk8IpJ9eoXxPi569dXoXz/SpAUUwei4PIsFJsoEauEPYqtzjpSYJGPbw+BB0y"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "QbggWfzf",
+              "toolName": "respond_to_principal",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "delivered": true
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHk8IpJ9eoXxPi569dXoXz/SpAUUwei4PIsFJsoEauEPYqtzjpSYJGPbw+BB0y"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "NcXksL1G",
+              "toolName": "wait_until_response",
+              "input": {
+                "rationale": "Waiting for the principal's further refinement of their AI tool idea."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHKwN9bsJs/bFiclR+8N8y3oGNZGWGzC+LPxh6PAxfGF7VMV22IdsPSAPTjUko"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "NcXksL1G",
+              "toolName": "wait_until_response",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "idle"
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHKwN9bsJs/bFiclR+8N8y3oGNZGWGzC+LPxh6PAxfGF7VMV22IdsPSAPTjUko"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": "[agent/message]\nFrom principal:{\n  \"content\": \"do some market reserch ans tellme\"\n}"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "8CDm1Yu0",
+              "toolName": "respond_to_principal",
+              "input": {
+                "message": "Understood. I will task the research team to survey current AI trends, identify underserved niches, and propose a few high-potential startup concepts for you. I'll get back to you shortly with those insights.",
+                "rationale": "Acknowledging the request to perform market research on AI startup opportunities. Since research is needed to provide high-quality ideas, I will now proceed to set up the research department."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHJNYWP9g1DWG1PGZz3c2SMOmxO47FQ//nVpc37dxzI2NrktQhXLuY8iioXdyt"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "8CDm1Yu0",
+              "toolName": "respond_to_principal",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "delivered": true
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHJNYWP9g1DWG1PGZz3c2SMOmxO47FQ//nVpc37dxzI2NrktQhXLuY8iioXdyt"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "tkMJp4uK",
+              "toolName": "create_subordinate_agent",
+              "input": {
+                "department": "research"
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH/pZANCUEfsrAOMpBnPbP1nbEdt/vR0wpgzLiz1JE9w/LAUV0744jljt9VgWL"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "tkMJp4uK",
+              "toolName": "create_subordinate_agent",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "approved": true,
+                    "agentId": "head_research_1",
+                    "reason": null
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH/pZANCUEfsrAOMpBnPbP1nbEdt/vR0wpgzLiz1JE9w/LAUV0744jljt9VgWL"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "6zciSVZV",
+              "toolName": "send_message",
+              "input": {
+                "agentId": "head_research_1",
+                "content": "Your objective is to conduct market research on current high-potential AI startup opportunities. Please identify 3-5 promising niches, analyze the market gaps, and propose specific AI tool concepts. Focus on areas where AI can solve clear, actionable pain points for either consumers or businesses. Report your findings back to me.",
+                "rationale": "Delegating the market research task to the newly created research department head."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH29eBeRkZrZmOdXpqpHFWA0n4B9tYlpH5gxmayZHBmdph3qpbQ6ANAkURmeow"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "6zciSVZV",
+              "toolName": "send_message",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "accepted",
+                    "eventId": "event_10",
+                    "awaiting": null,
+                    "note": "Acknowledged — your command was published to the event bus. No direct reply is expected for this; you will learn the outcome through later events. Continue with other work or call wait_until_response."
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH29eBeRkZrZmOdXpqpHFWA0n4B9tYlpH5gxmayZHBmdph3qpbQ6ANAkURmeow"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "89wlIkku",
+              "toolName": "wait_until_response",
+              "input": {
+                "rationale": "Waiting for the research head to complete the requested market analysis."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHDnvmf0Oxtfub5doK8jvH4XXvS3o5561I0mlMII8nreXhFV1KtWuijMhaTwbk"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "89wlIkku",
+              "toolName": "wait_until_response",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "idle"
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHDnvmf0Oxtfub5doK8jvH4XXvS3o5561I0mlMII8nreXhFV1KtWuijMhaTwbk"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": "[agent/message]\nFrom head_research_1:{\n  \"content\": \"I have completed the market research on high-potential AI startup opportunities. Here are the 3 identified niches and their corresponding AI tool concepts:\\n\\n1. Enterprise AI: 'OrchestraAgent' - Solves fragmentation in enterprise toolsets by providing a unified, context-aware orchestration layer.\\n2. Vertical/BFSI AI: 'ComplianceLens AI' - Addresses the critical need for explainable AI in regulatory environments, focusing on transparent audit trails for financial decisions.\\n3. Physical/Manufacturing AI: 'EdgeSmart Robotics Manager' - Targets the need for secure, localized data processing in industrial robotics, improving latency and privacy.\\n\\nThese areas represent clear, actionable pain points where AI integration can provide significant value. Please let me know if you would like a deeper dive into any of these areas or if we should proceed with a different research initiative.\"\n}"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "ZaGzMTOQ",
+              "toolName": "respond_to_principal",
+              "input": {
+                "message": "I’ve conducted some market research and identified three promising AI startup concepts that address significant industry pain points:\n\n1. **OrchestraAgent (Enterprise):** A unified AI layer that integrates fragmented enterprise tools, allowing them to communicate and act as a single, context-aware system.\n2. **ComplianceLens AI (Finance/BFSI):** An AI tool for highly regulated sectors that provides transparent, explainable audit trails for automated financial decisions—a critical need for regulatory compliance.\n3. **EdgeSmart Robotics Manager (Manufacturing):** A specialized tool for industrial robotics that manages localized, secure data processing, improving latency and data privacy in factory environments.\n\nDo any of these strike a chord with you? I’m happy to proceed with a more detailed deep dive into your favorite, or we can pivot if you're looking for something different.",
+                "rationale": "Presenting the research results to the principal and asking for their preference to decide the next steps."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHRoRRbnSQXAsn9MJNM7OKu2+r5XRECUiInwOzVb+amyNjKg4+fao6uBM5yTb6"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "ZaGzMTOQ",
+              "toolName": "respond_to_principal",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "delivered": true
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHRoRRbnSQXAsn9MJNM7OKu2+r5XRECUiInwOzVb+amyNjKg4+fao6uBM5yTb6"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "vK83vkab",
+              "toolName": "wait_until_response",
+              "input": {
+                "rationale": "Waiting for the principal's feedback on the research findings."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHYsD0V7NSD9EYC8/fVRQrE3rMZK+332CJCAnXc7ppvwxQhzb2vsDlk/uLbeUT"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "vK83vkab",
+              "toolName": "wait_until_response",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "idle"
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHYsD0V7NSD9EYC8/fVRQrE3rMZK+332CJCAnXc7ppvwxQhzb2vsDlk/uLbeUT"
                 }
               }
             }
           ]
         }
       ],
-      "updatedAt": 1782397441528
+      "updatedAt": 1782409844794
+    },
+    {
+      "agentId": "head_research_1",
+      "messages": [
+        {
+          "role": "user",
+          "content": "[agent/message]\nFrom executive_organization_1:{\n  \"content\": \"Your objective is to conduct market research on current high-potential AI startup opportunities. Please identify 3-5 promising niches, analyze the market gaps, and propose specific AI tool concepts. Focus on areas where AI can solve clear, actionable pain points for either consumers or businesses. Report your findings back to me.\"\n}"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "Qxg4pXCK",
+              "toolName": "create_subordinate_agent",
+              "input": {
+                "department": "research"
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHSR1Bzh4h/F9S998bTTBhWmk24ATfhotqAjadjDyhq07c07RoMJ0/uXYkPfhP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "Qxg4pXCK",
+              "toolName": "create_subordinate_agent",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "approved": true,
+                    "agentId": "manager_research_1",
+                    "reason": null
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHSR1Bzh4h/F9S998bTTBhWmk24ATfhotqAjadjDyhq07c07RoMJ0/uXYkPfhP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "aodCmGA5",
+              "toolName": "send_message",
+              "input": {
+                "agentId": "manager_research_1",
+                "content": "Your initiative is to lead the research on high-potential AI startup opportunities. \nObjective: Identify 3-5 promising AI niches, analyze their market gaps, and propose specific, actionable AI tool concepts that solve clear pain points for consumers or businesses.\n\nRequirements:\n- Deliver well-cited findings and recommendations.\n- Focus on actionable pain points.\n- Structure your output to clearly highlight the niche, the gap, and the proposed tool concept.\n\nYou are responsible for defining the execution plan and delivering these insights to me. Please start by outlining your approach.",
+                "rationale": "Delegating the market research initiative to the newly created manager and setting the core requirements and objective."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHwaWIP2eIDT8Prce8Sz+ooHYVJPe6BrpwzsXhPPBEzk9QU4D3et6cv0NZ5ZE3"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "aodCmGA5",
+              "toolName": "send_message",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "accepted",
+                    "eventId": "event_12",
+                    "awaiting": null,
+                    "note": "Acknowledged — your command was published to the event bus. No direct reply is expected for this; you will learn the outcome through later events. Continue with other work or call wait_until_response."
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHwaWIP2eIDT8Prce8Sz+ooHYVJPe6BrpwzsXhPPBEzk9QU4D3et6cv0NZ5ZE3"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "lZFxAvJE",
+              "toolName": "wait_until_response",
+              "input": {
+                "rationale": "Waiting for the manager to receive the instructions and begin planning the initiative."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHjlCtftca8y6M9V/3GlxsKSGvzjS/PvhnEXv6Spl5ahAc7re/WlTsoqxa3xFp"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "lZFxAvJE",
+              "toolName": "wait_until_response",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "idle"
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHjlCtftca8y6M9V/3GlxsKSGvzjS/PvhnEXv6Spl5ahAc7re/WlTsoqxa3xFp"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "updatedAt": 1782409786527
+    },
+    {
+      "agentId": "manager_research_1",
+      "messages": [
+        {
+          "role": "user",
+          "content": "[agent/message]\nFrom head_research_1:{\n  \"content\": \"Your initiative is to lead the research on high-potential AI startup opportunities. \\nObjective: Identify 3-5 promising AI niches, analyze their market gaps, and propose specific, actionable AI tool concepts that solve clear pain points for consumers or businesses.\\n\\nRequirements:\\n- Deliver well-cited findings and recommendations.\\n- Focus on actionable pain points.\\n- Structure your output to clearly highlight the niche, the gap, and the proposed tool concept.\\n\\nYou are responsible for defining the execution plan and delivering these insights to me. Please start by outlining your approach.\"\n}"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "HWa1Ajte",
+              "toolName": "create_subordinate_agent",
+              "input": {
+                "department": "research"
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHgZBXRXw5Yj5YpUEkNmtD8KcCa3Uc2BzdOHnCfE/oo+q2kKkdgZgnXDOhhtkR"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "HWa1Ajte",
+              "toolName": "create_subordinate_agent",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "approved": true,
+                    "agentId": "worker_research_1",
+                    "reason": null
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHgZBXRXw5Yj5YpUEkNmtD8KcCa3Uc2BzdOHnCfE/oo+q2kKkdgZgnXDOhhtkR"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "veRjWZq5",
+              "toolName": "create_and_assign_task",
+              "input": {
+                "referceTask": [],
+                "title": "Identify and Analyze AI Niches and Market Gaps",
+                "description": "Research and identify 3-5 high-potential AI niches. For each niche, analyze existing market gaps and document current industry trends. Ensure findings are backed by credible sources.",
+                "acceptanceCriteria": [
+                  "Produce a list of 3-5 identified AI niches with documented market gaps for each.",
+                  "Ensure each niche is supported by at least 2 credible, recent industry reports or data sources."
+                ],
+                "dependencies": [],
+                "priority": "high",
+                "assignedTo": "worker_research_1",
+                "deadline": 1739800000,
+                "budget": {
+                  "maxTokens": 2000,
+                  "maxUsd": 50
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHUlA+fEambeZCdNSowxs9Y45wGXJ1xTtZPpl3J/6TrHIcXNB2+SnaQ1Ojst0B"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "veRjWZq5",
+              "toolName": "create_and_assign_task",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "taskId": "task_1",
+                    "created": true,
+                    "reason": null
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHUlA+fEambeZCdNSowxs9Y45wGXJ1xTtZPpl3J/6TrHIcXNB2+SnaQ1Ojst0B"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "8Oj5dNld",
+              "toolName": "wait_until_response",
+              "input": {
+                "rationale": "Waiting for the worker to complete the initial research task on AI niches and market gaps."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHdgq+Ol7X7hdCtX3wwwhVyIUVr3uvox1lC4BF7FvY9Qrjp2EB49GUAg4KoEqB"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "8Oj5dNld",
+              "toolName": "wait_until_response",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "idle"
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHdgq+Ol7X7hdCtX3wwwhVyIUVr3uvox1lC4BF7FvY9Qrjp2EB49GUAg4KoEqB"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": "[agent/review_presentation_response]\nFrom auditor_service:{\n  \"summary\": \"PASS: The submission meets all acceptance criteria: 3 niches were identified, each with documented market gaps, and each is supported by 2 credible, recent industry sources. The analysis aligns with current industry focus areas and provides actionable intelligence. No regressions or gaps identified.\",\n  \"taskId\": \"task_1\"\n}"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "H9BM7j2n",
+              "toolName": "update_task_status",
+              "input": {
+                "taskId": "task_1",
+                "newTaskStatus": "completed",
+                "rationale": "The auditor has passed the initial research on AI niches and market gaps. Updating status to completed."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHugK6EZtu4oBU4+3UZ/Ep2QL1+casTTl+Yjl1wP7IzeQtG86ZvHTAL8XuTjUB"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "H9BM7j2n",
+              "toolName": "update_task_status",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "transitioned": true,
+                    "reason": null
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHugK6EZtu4oBU4+3UZ/Ep2QL1+casTTl+Yjl1wP7IzeQtG86ZvHTAL8XuTjUB"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "PGqaOCuc",
+              "toolName": "create_and_assign_task",
+              "input": {
+                "referceTask": [],
+                "title": "Develop AI Tool Concepts for Identified Niches",
+                "description": "Based on the 3 identified AI niches and market gaps from task_1, develop specific, actionable AI tool concepts that solve clear pain points for consumers or businesses. For each concept, define the target audience, core features, and competitive advantage.",
+                "acceptanceCriteria": [
+                  "Propose 1 actionable, specific AI tool concept for each of the 3 identified niches.",
+                  "For each tool concept, detail the target audience, the pain point being solved, and how it differentiates from existing solutions.",
+                  "Ensure the proposed concepts are logical, technically feasible, and market-relevant based on the previous research."
+                ],
+                "dependencies": [
+                  "task_1"
+                ],
+                "priority": "high",
+                "assignedTo": "worker_research_1",
+                "deadline": 1739900000,
+                "budget": {
+                  "maxTokens": 2000,
+                  "maxUsd": 50
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH/Ml4rqRprkvcUhgzyxSVmIZa9sB13RVz9O9yz+YWmIYpxKOYJiDkc7vE+091"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "PGqaOCuc",
+              "toolName": "create_and_assign_task",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "taskId": "task_2",
+                    "created": true,
+                    "reason": null
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH/Ml4rqRprkvcUhgzyxSVmIZa9sB13RVz9O9yz+YWmIYpxKOYJiDkc7vE+091"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "TQH8JD32",
+              "toolName": "wait_until_response",
+              "input": {
+                "rationale": "Waiting for the worker to develop the AI tool concepts based on the previously identified niches."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHjF5Z4Po4Dc0LSiTqrRlIeU5q1HH2nupa5OfQq7NbO4nU7zlqgUAFyp76AsEK"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "TQH8JD32",
+              "toolName": "wait_until_response",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "idle"
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHjF5Z4Po4Dc0LSiTqrRlIeU5q1HH2nupa5OfQq7NbO4nU7zlqgUAFyp76AsEK"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": "[agent/review_presentation_response]\nFrom auditor_service:{\n  \"summary\": \"PASS: The submission successfully meets the acceptance criteria for the task. It provides three distinct, actionable AI tool concepts (OrchestraAgent, ComplianceLens AI, EdgeSmart Robotics Manager) corresponding to the specified niches (Enterprise, Vertical/BFSI, Physical/Manufacturing). Each concept includes a clearly defined target audience, a specific pain point being addressed, and a viable competitive differentiation. The concepts are technically grounded and address current market needs regarding enterprise integration, regulatory compliance (XAI), and edge computing/data privacy in industrial settings.\",\n  \"taskId\": \"task_2\"\n}"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "ivWUPqK5",
+              "toolName": "update_task_status",
+              "input": {
+                "taskId": "task_2",
+                "newTaskStatus": "completed",
+                "rationale": "The auditor has passed the AI tool concepts task. Marking as completed."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHm1OY0mX+orTZUw+rmhZAcNMIo0xJTIHlrKg6bZFyzlqSpki3cOnC06dfS0/4"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "ivWUPqK5",
+              "toolName": "update_task_status",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "transitioned": true,
+                    "reason": null
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHm1OY0mX+orTZUw+rmhZAcNMIo0xJTIHlrKg6bZFyzlqSpki3cOnC06dfS0/4"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "JKgMJydg",
+              "toolName": "send_message",
+              "input": {
+                "agentId": "head_research_1",
+                "content": "The research into high-potential AI startup opportunities is complete. \n\nSummary of Findings:\n1. Enterprise AI: 'OrchestraAgent' - Solves fragmentation in enterprise toolsets by providing a unified, context-aware orchestration layer.\n2. Vertical/BFSI AI: 'ComplianceLens AI' - Addresses the critical need for explainable AI in regulatory environments, focusing on transparent audit trails for financial decisions.\n3. Physical/Manufacturing AI: 'EdgeSmart Robotics Manager' - Targets the need for secure, localized data processing in industrial robotics, improving latency and privacy.\n\nThese concepts are well-supported by market research and address significant, actionable pain points. I am ready to move to the next initiative.",
+                "rationale": "Reporting the completed initiative to the head of the department."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHdVQf1AwHPYamAykTOTUVcwLzKWxpWZxRnMciJEqjNLureWPKQZUFTn3TpJQ3"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "JKgMJydg",
+              "toolName": "send_message",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "accepted",
+                    "eventId": "event_26",
+                    "awaiting": null,
+                    "note": "Acknowledged — your command was published to the event bus. No direct reply is expected for this; you will learn the outcome through later events. Continue with other work or call wait_until_response."
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHdVQf1AwHPYamAykTOTUVcwLzKWxpWZxRnMciJEqjNLureWPKQZUFTn3TpJQ3"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "73d50Dhm",
+              "toolName": "get_status",
+              "input": {
+                "rationale": "Checking project status to ensure all tasks are closed before finalizing."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH3mcZZgpDj9WBUptxOZ+7NSDAmlK3CcRHTOKpSuHzDMe3YZ0S31+nb3DL4/69"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "73d50Dhm",
+              "toolName": "get_status",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "agent": "manager_research_1",
+                    "agentStatus": "active",
+                    "tasks": []
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH3mcZZgpDj9WBUptxOZ+7NSDAmlK3CcRHTOKpSuHzDMe3YZ0S31+nb3DL4/69"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "UgoTKNcn",
+              "toolName": "wait_until_response",
+              "input": {
+                "rationale": "Finalizing the initiative and waiting for acknowledgment or any further instruction from the head."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH/icOPGApL5yr0d6D00AD66OpmlJgYpHN8jJkoueVClmAOIT7NPxkH5j1dnBq"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "UgoTKNcn",
+              "toolName": "wait_until_response",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "idle"
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH/icOPGApL5yr0d6D00AD66OpmlJgYpHN8jJkoueVClmAOIT7NPxkH5j1dnBq"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "updatedAt": 1782409826934
+    },
+    {
+      "agentId": "worker_research_1",
+      "messages": [
+        {
+          "role": "user",
+          "content": "[agent/task_delegation_request]\nYou have been assigned task task_1: \"Identify and Analyze AI Niches and Market Gaps\".\n\nResearch and identify 3-5 high-potential AI niches. For each niche, analyze existing market gaps and document current industry trends. Ensure findings are backed by credible sources.\n\nAcceptance criteria:\n- Produce a list of 3-5 identified AI niches with documented market gaps for each.\n- Ensure each niche is supported by at least 2 credible, recent industry reports or data sources."
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "gYFr5jaE",
+              "toolName": "update_task_status",
+              "input": {
+                "taskId": "task_1",
+                "newTaskStatus": "in_progress",
+                "rationale": "Acknowledging the assignment of task_1 and beginning the research process."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHMZurFWnRNCriDmjtmsjtYvlW51IkyY/gOkugxA47IRrwMFiw0QIfjIE+vHYC"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "gYFr5jaE",
+              "toolName": "update_task_status",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "transitioned": true,
+                    "reason": null
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHMZurFWnRNCriDmjtmsjtYvlW51IkyY/gOkugxA47IRrwMFiw0QIfjIE+vHYC"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "LIBzSkN0",
+              "toolName": "web_search",
+              "input": {
+                "query": "high-potential AI niches market gaps 2024 2025 industry reports",
+                "rationale": "Starting the research to identify high-potential AI niches and associated market gaps as per task requirements."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH/9A12aiNVO9K1/fPkl5OqRu9pLlndb+JU17OyN+y+IK6IBe424o//FVlDj/A"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "LIBzSkN0",
+              "toolName": "web_search",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "query": "high-potential AI niches market gaps 2024 2025 industry reports",
+                    "results": [
+                      {
+                        "title": "AI’s Trillion-Dollar Opportunity | Bain & Company",
+                        "url": "https://www.bain.com/insights/ais-trillion-dollar-opportunity-tech-report-2024/",
+                        "publishedDate": "2024-09-25T19:48:31.000Z",
+                        "snippet": "AI’s Trillion-Dollar Opportunity | Bain & Company\n\nMain menu\n\n#### You have no saved items.\n\nBookmark content that interests you and it will be saved here for you to read or share later.\n\nContent added to saved items\n\nSaved items (0) Close\n\nRemoved from saved items\n\nSaved items (0) Close\n\n- Copy link Email LinkedIn X Facebook document.getElementById(\"2301959_LinkedIn_socialLink6507\").onclick = function () { return shareData(this.href); } document.getElementById(\"2301959_X_socialLink6507\").onclick = function () { return shareData(this.href); } document.getElementById(\"2301959_Facebook_socialLink6507\").onclick = function () { return shareData(this.href); } document.getElementById(\"2301959_copyLink6507\").onclick = function (event) { event.preventDefault(); navigator.clipboard.writeText(window.location.href); } '>\n\nProgress:\n\nen\n\n##### At a Glance\n\n- The big cloud providers are the largest concentration of R&D, talent, and innovation today, pushing the boundaries of large models and advanced infrastructure.\n- Innovation with smaller models (open-source and proprietary), edge infrastructure, and commercial software is reaching enterprises, sovereigns, and research institutions.\n- Commercial software vendors are rapidly expanding their feature sets to provide the best use cases and leverage their data assets.\n\nThe pace of technological change has never been faster, and senior executives are looking to understand how these disruptions will reshape the sector. Generative AI is the prime mover of the current wave of change, but it is complicated by post-globalization shifts and the need to adapt business processes to deliver value.\n\nAccelerated market growth. Nvidia’s CEO, Jensen Huang, summed up the potential in the company’s Q3 2024 earnings call: “Generative AI is the largest TAM [total addressable market] expansion of software and hardware that we’ve seen in several decades.” Bain estimates that the total addressable market for AI-related hardware and software will grow between 40% and 55% annually for at least the next three years, reaching between $780 billion and $990 billion by 2027 (see Figure 1). Fluctuations in supply and demand will create volatility along the way, but a long-term, durable trajectory seems like it is here to stay.\n\nFigure 1\n\nThe AI market could reach $780 billion to $990 billion by 2027\n\nThree centers of innovation. So far, the largest cloud service providers (CSPs), or hyperscalers, have led the market in R&D spending, talent deployed, and innovation. They’ll continue to lead but will look for more innovation from the next tier of CSPs, software-as-a-service providers, sovereigns, and enterprise as well as independent software vendors to fuel the next wave of growth.\n\n- High end: bigger models, better intelligence, more compute. The big players will push ahead, developing larger and more powerful models and continuous gains in performance and intelligence. Their larger models will require more computational power, infrastructure, and energy, pushing the scale of data centers from today’s high end (around 100 megawatts) to much larger data centers measured in gigawatts. This will strain the power grid and create readiness and resilience challenges in the supply chain for a wide spectrum of inputs, including graphics processing units (GPUs), substrates, silicon photonics, and power generation equipment and many others.\n- Enterprises and sovereigns: smaller models, RAG implementations, devices, tailored silicon. Generative AI inference is set to become the killer app for edge computing as enterprises try to manage suppliers, protect data, and control total cost of ownership. Latency, security, and cost become increasingly relevant for inference workloads that need real-time processing and use owned data sets. Algorithms that use RAG (retrieval-augmented generation) and vector embeddings (numeric representations of data) handle a lot of the computing, networking, and storage tasks close to where the data is stored. This can reduce latency, lower costs, and keep data private and secure. Small language models that have been trained or tuned for a specific domain or task will become increasingly important in this context, as they can be less costly and more energy efficient to run than large general-purpose language models. The rapid growth of new models, both open-source (Meta’s Llama, Mistral, TII’s Falcon) and proprietary (Anthropic’s Claude, Google AI’s Gemini), is extending the range of cost- and energy-efficient options.\n\n- Independent software vendors (ISVs): racing to incorporate AI capabilities. Large language model (LLM)-enabled software as a service is already providing AI-powered applications at Adobe, Microsoft, Salesforce, and many other companies. This will create a flood of new capabilities in the coming years, giving enterprises the option to deploy generative AI as part of their existing application suite rather than develop custom applications.\n\nDisrupted industry structure with more verticalization. The AI workload is challenging and will continue to grow (see Figure 2). The underlying matrix algebra and data-heavy computation strains parallelism, memory and system bandwidth, networking, infrastructure, and application software. Technology vendors are responding by optimizing the technology stack vertically to deliver more efficiencies. For example, most hyperscalers have developed their own silicon for training and inference, like Amazon’s Trainium and Graviton, Google’s TPU, or Meta’s MTIA. Nvidia has expanded its “unit of compute” beyond the GPU alone, now integrated with fabrics, hybrid memory, DGX, and cloud offerings. Nvidia is also enhancing its software stack and offering hosted services, providing tailored solutions that leverage its hardware and create a more efficient ecosystem for developers and users. Apple is developing its own on-device LLM and already has its own silicon.\n\nFigure 2\n\nAI workloads could grow 25% to 35% per year through 2027\n\nOther segment-specific disruptions include:\n\n- Large language models (LLMs): The underlying models are proliferating. OpenAI's ChatGPT held a near monopoly among production-grade generative AI solutions until 2023. Since then, the growth of open-source and proprietary models has improved to provide many more diverse options, including segmented versions of OpenAI’s offerings.\n- Storage: Storage technology will advance to accommodate the needs of generative AI, including accelerated consolidation of data siloes, increasing use of object vs. file and block storage, and selected upgrades to highly vectorized database capabilities.\n- Data management and virtualization: The growing need for data preparation and mobility will spur growth in data management software. This will be particularly important as data-hungry AI apps mobilize data stored in public clouds with ingress and egress fees.\n- Tech services: In the medium term, tech services will be in high demand while customers lack the skills and expertise needed for AI deployment and data modernization. Over time, significant portions of tech services themselves will be replaced by software. Clients in these domains are racing to design the new services to sustain their growth trajectories.\n\nAI’s disruptive growth will continue to reshape the tech sector, as innovation spreads beyond the hyperscalers (where it is centered today) to smaller CSPs, enterprises, sovereigns, software vendors, and beyond. Bigger models will continue to push the boundaries, while smaller models will create new, more focused opportunities in specific verticals and domains. AI’s workload demands will also spark innovation in storage, compute, memory, and data centers. As the market becomes more competitive and complex, companies will need to adapt rapidly to capture their share of this potential trillion-dollar market.\n\nRead the Next ChapterAI Changes Big and Small Computing\n\n### More from the report\n\n###### Tags\n\n### How We've Helped Clients\n\n#### A Technology Company’s Transformation Restores Its Growth Trajectory\n\n#### Enterprise Technology An Energy and Chemical Company Rebuilds Its Technology Foundation\n\n#### Performance Improvement Aggressively growing an IT service provider with a high-performance culture\n\n### Ready to talk?\n\nI want to talk to your experts in: Technology Advanced Manufacturing & Services Aerospace & Defense Agribusiness Automotive Aviation Building Products & Technologies Chemicals Construction & Infrastructure Consumer Products Energy & Natural Resources Financial Services Healthcare & Life Sciences Higher Education Machinery & Equipment Media & Entertainment Metals Mining Oil & Gas Paper & Packaging Private Equity Public Sector Real Estate Retail Social Impact Telecommunications Transportation Travel & Leisure Utilities & Renewables Please select an industry from the dropdown list\n\nWe work with ambitious leaders who want to define the future, not hide from it. Together, we achieve extraordinary outcomes.\n\nYour email Please enter a valid email address CONTACT US\n\nContact Bain\n\n#### How can we help you?"
+                      },
+                      {
+                        "title": "Enterprise AI agents & copilots: Our growth projections for the $5B+ market - CB Insights Research",
+                        "url": "https://www.cbinsights.com/research/enterprise-ai-agents-market-size/",
+                        "publishedDate": "2025-04-29T16:05:58.000Z",
+                        "snippet": "Enterprise AI agents & copilots: Our growth projections for the $5B+ market - CB Insights Research\n\nThe enterprise AI agents & copilots space is only a couple of years old but already worth $5B and on track to more than double in size this year, according to CB Insights estimates.\n\nThese LLM-powered applications can execute complex tasks autonomously (agents) or alongside a human (copilots) and have come for just about every horizontal job function.\n\nWithin the overarching space, 2 markets are already generating over $1B each in annual revenue: enterprise workflow agents & copilots(those targeting a wide range of applications such as general productivity and research use cases) and coding agents & copilots.\n\nDecision-makers need to understand how big the enterprise AI agents & copilots space is and what’s driving it to know where to invest, which product strategy to adopt, and where to focus their AI strategy.\n\nTo answer that, we used CB Insights proprietary datasets — including revenue, headcount, valuation, and funding — to create market sizing estimates and predict which enterprise AI agent & copilot markets will grow the most.\n\nEnterprise AI agents & copilots markets featured in this analysis:\n\n- Enterprise workflow\n- Coding\n- Customer service\n- Recruiting\n- Sales(including AI SDRs)\n- Marketing\n- Legal\n- Security operations center (SOC)\n- Employee support\n\nBelow, we look at the largest enterprise AI agent & copilot developers, how much the space will grow this year, and which markets will drive that growth. We also share the methodology behind our calculations.\n\n### Drivers of 2024 revenue growth: Big tech offerings and the rise of AI coding\n\nBig tech companies’ offerings made up a third of AI agents & copilots revenue in 2024.\n\nWe estimate that Microsoft alone captured 25%+ share of the overall space, led by 2 products:\n\n- Microsoft Copilot, with an estimated $800M in 2024 revenue, contributing to enterprise workflow being the top agent & copilot market last year\n- GitHub Copilot, with an estimated $600M in 2024 revenue\n\nCoding follows enterprise workflow as the second-largest market, with coding AI agents & copilots companies gaining significant traction during the second half of 2024. Already, this space is minting unicorns in as little as 6 months — 4x faster than the AI industry average.\n\nSource: CB Insights — Windsurf company profile, Magic company profile, Cognition company profile, Cursor company profile\n\nQuickly soaring valuations have been supported by explosive revenue growth. StackBlitz‘s Bolt, for instance, grew from 0 to $20M in just 2 months, while Cursor saw ARR increase from $1M to $200M in just over a year.\n\nRank coding AI agents & copilots by revenue\n\n### The enterprise AI agents & copilots space will surpass $10B in annual revenue by the end of 2025\n\nThe enterprise AI agents & copilots space is showing no signs of slowing down.\n\nExtrapolating on the growth rate observed in Q1’25, we predict the space will grow 150%+ YoY, reaching $13B in annual revenue by the end of 2025.\n\n### Fastest-growing markets within enterprise AI agents & copilots in 2025\n\nIn addition to enterprise workflow and coding, we expect 3 additional markets will drive growth and generate $1B+ each in annual revenue by the end of the year: recruiting AI agents & copilots, sales AI agents & copilots, and customer service AI agents & copilots.\n\nAll 3 markets have experienced 50%+ deal growth over the last 12 months, signaling growing investor interest. (Both the SOC and employee support markets will also experience significant growth this year, although they likely won’t reach the $1B revenue mark given a lower estimated 2024 base compared to the 3 markets mentioned above.)\n\nWant to see more research? Start your free trial.\n\nIf you’re already a customer, log in here.\n\n#### The State of Venture Q2’26: Midyear Review\n\nWebinar\n\n#### Y Combinator’s Winter 2026 batch is its most technically complex cohort yet — here’s what it signals about physical AI\n\nResearch Brief\n\n#### Book of Scouting Reports: Manufacturing robotics\n\nReport\n\n#### The State of Venture Q2’26: Midyear Review\n\nWebinar Jul 9 2 PM EDT Get a clear, data driven look at where venture stands at the midpoint of 2026 and the predictive insights to position yourself ahead of what's coming in H2.\n\nRegister Now\n\n#### Y Combinator’s Winter 2026 batch is its most technically complex cohort yet — here’s what it signals about physical AI\n\nResearch Brief We analyzed all 199 companies in YC's Winter 2026 batch to uncover the trends shaping physical AI, AI-native services, and the infrastructure powering them.\n\n#### Book of Scouting Reports: Manufacturing robotics\n\nReport We dive into the predictive signals, including key financial metrics and market opportunities, on 80 manufacturing robotics startups across 14 tech markets."
+                      },
+                      {
+                        "title": "The State of AI: Global Survey 2025 | McKinsey",
+                        "url": "https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai",
+                        "publishedDate": "2025-11-05T00:00:00.000Z",
+                        "snippet": "The State of AI: Global Survey 2025 | McKinsey\n\nSkip to main content\n\n# The state of AI in 2025: Agents, innovation, and transformation\n\nNovember 5, 2025 | Survey\n\nAlmost all survey respondents say their organizations are using AI, and many have begun to use AI agents. But most are still in the early stages of scaling AI and capturing enterprise-level value.\n\n(30 pages)\n\n## Key findings\n\n1. Most organizations are still in the experimentation or piloting phase: Nearly two-thirds of respondents say their organizations have not yet begun scaling AI across the enterprise.\n2. High curiosity in AI agents: Sixty-two percent of survey respondents say their organizations are at least experimenting with AI agents.\n3. Positive leading indicators on impact of AI: Respondents report use-case-level cost and revenue benefits, and 64 percent say that AI is enabling their innovation. However, just 39 percent report EBIT impact at the enterprise level.\n4. High performers use AI to drive growth, innovation, and cost: Eighty percent of respondents say their companies set efficiency as an objective of their AI initiatives, but the companies seeing the most value from AI often set growth or innovation as additional objectives.\n5. Redesigning workflows is a key success factor: Half of those AI high performers intend to use AI to transform their businesses, and most are redesigning workflows.\n6. Differing perspectives on employment impact: Respondents vary in their expectations of AI’s impact on the overall workforce size of their organizations in the coming year: 32 percent expect decreases, 43 percent no change, and 13 percent increases.\n\n---\n\n## About the authors\n\nThis article is a collaborative effort by Alex Singla, Alexander Sukharevsky, Bryce Hall, Lareina Yee, and Michael Chui, with Tara Balakrishnan, representing views from QuantumBlack, AI by McKinsey.\n\nThree years since the introduction of gen AI tools triggered a new era of artificial intelligence, nearly nine out of ten survey respondents say their organizations are regularly using AI—but the pace of progress remains uneven. While AI tools are now commonplace, most organizations have not yet embedded them deeply enough into their workflows and processes to realize material enterprise-level benefits. The latest McKinsey Global Survey on the state of AI reveals a landscape defined by both wider use—including growing proliferation of agentic AI—and stubborn growing pains, with the transition from pilots to scaled impact remaining a work in progress at most organizations.\n\n## AI use continues to broaden but remains primarily in pilot phases\n\nOur latest survey shows a larger share of respondents reporting AI use by their organizations, though most have yet to scale the technologies. The share of respondents saying their organizations are using AI in at least one business function has increased since our research last year: 88 percent report regular AI use in at least one business function, compared with 78 percent a year ago. But at the enterprise level, the majority are still in the experimenting or piloting stages (Exhibit 1), with approximately one-third reporting that their companies have begun to scale their AI programs.\n\n### Many organizations are already experimenting with AI agents\n\nOrganizations are also beginning to explore opportunities with AI agents—systems based on foundation models capable of acting in the real world, planning and executing multiple steps in a workflow. Twenty-three percent of respondents report their organizations are scaling an agentic AI system somewhere in their enterprises (that is, expanding the deployment and adoption of the technology within a least one business function), and an additional 39 percent say they have begun experimenting with AI agents. But use of agents is not yet widespread: Most of those who are scaling agents say they’re only doing so in one or two functions. In any given business function, no more than 10 percent of respondents say their organizations are scaling AI agents (Exhibit 2).\n\nLooking at individual business functions, agent use is most commonly reported in IT and knowledge management, where agentic use cases such as service-desk management in IT and deep research in knowledge management have quickly developed. By industry, the use of AI agents is most widely reported in the technology, media and telecommunications, and healthcare sectors (Exhibit 3).\n\n### For most organizations, AI use remains in pilot phases\n\n## Reported AI use ticks upward in nearly every industry\n\nIn every industry besides the technology sector (which had already exceeded 90 percent reporting AI use), the share of respondents saying that their organization is regularly using AI in at least one business function has meaningfully increased since our previous survey. In last year’s research, respondents working for technology companies reported being ahead of other industries with respect to their use of AI. Now, respondents in media and telecommunications and insurance are just as likely as those in technology to report AI use (exhibit). Throughout eight years of AI research, we have consistently seen IT and marketing and sales as the business functions that respondents most often say are using AI. But our latest findings show that knowledge management is now also one of the functions with the most reported AI use.\n\nLooking at individual use cases within business functions, respondents most often report using AI to capture information as well as processing and delivering it, such as through a conversational interface; in content support for marketing strategy, including drafting, generating ideas, and presenting knowledge for creating marketing strategies; and in contact-center or customer service automation.\n\nThe use of AI overall is broadening within organizations. Respondents increasingly report that their organizations are using AI in more business functions (Exhibit 4). More than two-thirds of respondents now say their organizations are using AI in more than one function, and half report using AI in three or more functions (for a breakdown by industry, see sidebar, “Reported AI use ticks upward in nearly every industry”).\n\nHowever, many companies—particularly smaller ones—have yet to integrate AI deeply across their workflows. While only one-third of all respondents say they are scaling their AI programs across their organizations, larger companies—both in terms of revenues and the number of employees—are more likely to have reached the scaling phase. Nearly half of respondents from companies with more than $5 billion in revenue have reached the scaling phase, compared with 29 percent of those with less than $100 million in revenues (Exhibit 5).\n\n### AI as a catalyst for innovation\n\nResponses suggest that for most organizations, the use of AI has not yet significantly affected enterprise-wide EBIT. Thirty-nine percent of respondents attribute any level of EBIT impact to AI, and most of those respondents say that less than 5 percent of their organization’s EBIT is attributable to AI use. However, respondents see other company-wide qualitative outcomes: A majority say that their organizations’ use of AI has improved innovation, and nearly half report improvement in customer satisfaction and competitive differentiation (Exhibit 6).\n\nWhile reported cases of enterprise-wide EBIT impact are limited, many respondents say they are seeing cost benefits from individual AI use cases—especially in software engineering, manufacturing, and IT (Exhibit 7).\n\nRevenue increases resulting from AI use are most commonly reported in use cases within marketing and sales, strategy and corporate finance, and product and service development, which is consistent with what we’ve seen over the years we have been conducting the survey (Exhibit 8).\n\n## Organizations with ambitious AI agendas are seeing the most benefit\n\nMeaningful enterprise-wide bottom-line impact from the use of AI continues to be rare, though our survey results suggest that thinking big can pay off. Respondents who attribute EBIT impact of 5 percent or more to AI use and say their organization has seen “significant” value from AI use—our definition of AI high performers, representing about 6 percent of respondents—report pushing for transformative innovation via AI, redesigning workflows, scaling faster, implementing best practices for transformation, and investing more.\n\nHigh performers have bold ambitions to transform their business: AI high performers are more than three times more likely than others are to say their organization intends to use AI to bring about transformative change to their businesses (Exhibit 9).\n\nOrganizations seeing the greatest impact from AI often aim to achieve more than cost reductions from these technologies. While most respondents report that efficiency gains are an objective of their organizations’ AI use, high performers are more likely than others are to say their organizations have also set growth and/or innovation as an objective of their AI efforts (Exhibit 10).\n\nWhether or not they qualify as high performers, respondents who say their organizations are using AI to spur growth and/or innovation are more likely than others are to report achieving a range of qualitative enterprise-level benefits from their AI use—such as improved customer satisfaction, competitive differentiation, profitability, revenue growth, and change in market share.\n\nIn addition to high aspirations at the enterprise level, high performers are also nearly three times as likely as others are to say their organizations have fundamentally redesigned individual workflows (Exhibit 11). Indeed, this intentional redesigning of workflows has one of the strongest contributions to achieving meaningful business impact of all the factors tested.1\n\nAI high performers are also regularly using AI in more business functions than their peers. These respondents are much more likely than others are to report use in marketing and sales, strategy and corporate finance, and product and service development, for example. Additionally, high performers have advanced further with their use of AI agents than others have. In most business functions, AI high performers are at least three times more likely than their peers to report that they are scaling their use of agents (Exhibit 12).\n\nThe findings also show that AI high performers’ use of AI is more often championed by their leaders. High performers are three times more likely than their peers to strongly agree that senior leaders at their organizations demonstrate ownership of and commitment to their AI initiatives (Exhibit 13). These respondents are also much more likely than others are to say that senior leaders are actively engaged in driving AI adoption, including role modeling the use of AI.\n\nIn addition to having senior leadership ownership and commitment, AI high performers are also more likely to employ a range of practices to realize value from AI use. For example, high performers are more likely than others are to say their organizations have defined processes to determine how and when model outputs need human validation to ensure accuracy (Exhibit 14). This is another one of the top factors we tested to determine those that most distinguished high performers. The full set of management practices align with our broader Rewired research, which is based on more than 200 at-scale AI transformations. They span six dimensions essential to capturing value from AI: strategy, talent, operating model, technology, data, and adoption and scaling. All of the management practices we tested correlate positively with value attributable to AI. These practices enable organizations to innovate and capture value from AI at scale.\n\nHaving an agile product delivery organization, or an enterprise-wide agile organization with well-defined delivery processes, is also strongly correlated with achieving value. Establishing robust talent stra"
+                      },
+                      {
+                        "title": "Vertical AI Market Growth Analysis - Size and Forecast 2025-2029 | Technavio",
+                        "url": "https://www.technavio.com/report/vertical-ai-market-industry-analysis",
+                        "publishedDate": "2025-12-11T17:13:02.000Z",
+                        "snippet": "Vertical AI Market Growth Analysis - Size and Forecast 2025-2029 | Technavio\n\nSkip to main content\n\n# Vertical AI Market Analysis, Size, and Forecast 2025-2029:North America (US, Canada, and Mexico), APAC (China, Japan, and South Korea), Europe (Germany, UK, and France), Middle East and Africa (UAE, Saudi Arabia, and Israel), South America (Brazil, Argentina, and Colombia), and Rest of World (ROW)\n\nPublished: Dec 2025 305 Pages SKU: IRTNTR81070\n\n## Market Overview at a Glance\n\n$126.65 B\n\nMarket Opportunity\n\n24.3%\n\nCAGR 2024 - 2029\n\n38.2%\n\nNorth America Growth\n\n$21.49 B\n\nSoftware segment 2023\n\nEnjoy complimentary customization on priority with your Enterprise License.\n\n- Snapshot\n- Table of Contents\n- Methodology\n\n## Vertical AI Market Size 2025-2029\n\nThe vertical ai market size is valued to increase by USD 126.65 billion, at a CAGR of 24.3% from 2024 to 2029. Increasing demand for specialization and domain-specific solutions will drive the vertical ai market.\n\n### Major Market Trends & Insights\n\n- North America dominated the market and accounted for a 38.2% growth during the forecast period.\n- By Component - Software segment was valued at USD 21.49 billion in 2023\n- By Deployment - Cloud-based segment accounted for the largest market revenue share in 2023\n\n### Market Size & Forecast\n\n- Market Opportunities: USD 183.88 billion\n- Market Future Opportunities: USD 126.65 billion\n- CAGR from 2024 to 2029 : 24.3%\n\n### Market Summary\n\n- The Vertical AI Market is shifting from general-purpose platforms to specialized solutions designed for specific industry contexts. This evolution is driven by the demand for systems with deep domain knowledge that can address unique operational challenges and regulatory requirements.\n- Businesses are leveraging vertical generative AI and domain-specific datasets to achieve hyper-personalization at scale, enhance AI-powered diagnostics in healthcare, and implement predictive maintenance AI in manufacturing. The proliferation of big data and advanced specialized AI chips provides the necessary foundation for training sophisticated deep learning models.\n- For instance, in logistics, a company can deploy AI for supply chain optimization using computer vision algorithms to monitor warehouse inventory and natural language processing to manage shipping documentation, significantly improving efficiency. However, challenges such as vertical AI implementation costs and the need for skilled professionals in AI model risk management persist.\n- The adoption of cloud-based AI platforms and on-premises AI deployment options offers flexibility, while a focus on explainable machine learning addresses concerns around transparency and trust, making these industry-specific AI solutions more accessible.\n\n## What will be the Size of the Vertical AI Market during the forecast period?\n\nGet Key Insights on Market Forecast (PDF) Get Free Sample\n\n## How is the Vertical AI Market Segmented?\n\nThe vertical ai industry research report provides comprehensive data (region-wise segment analysis), with forecasts and estimates in \"USD million\" for the period 2025-2029, as well as historical data from 2019-2023 for the following segments.\n\nComponent\n\n- Software\n- Services\n- Hardware\n\nDeployment\n\n- Cloud-based\n- On-premises\n\nEnd-user\n\n- IT and telecom\n- BFSI\n- Healthcare\n- Retail\n- Others\n\nGeography\n\nNorth America\n\n- US\n- Canada\n- Mexico\n\nAPAC\n\n- China\n- Japan\n- South Korea\n\nEurope\n\n- Germany\n- UK\n- France\n\nMiddle East and Africa\n\n- UAE\n- Saudi Arabia\n- Israel\n\nSouth America\n\n- Brazil\n- Argentina\n- Colombia\n\n### By Component Insights\n\nThe software segment is estimated to witness significant growth during the forecast period.\n\nThe software segment of the vertical AI market is characterized by solutions that provide industry-specific functionalities. These applications are designed to integrate into the workflows of sectors like healthcare, finance, and manufacturing.\n\nThe demand is driven by the need for tools that understand domain nuances, from regulatory compliance to diagnostic accuracy. For example, AI-powered diagnostics and AI-powered recommendation engines are becoming standard.\n\nHowever, a significant barrier remains, as 61% of firms report a lack of experience with AI governance tools. This challenge highlights the need for user-friendly vertical generative AI and agentic orchestration platforms.\n\nAs AI applications in healthcare and AI in financial services mature, the focus shifts to deploying deep learning models for contextual automation and AI-driven personalization to achieve a competitive edge.\n\nEffective AI in manufacturing automation relies heavily on specialized AI-powered robots and robust computer vision algorithms. The growth of cloud-based AI platforms facilitates this adoption.\n\nThe Software segment was valued at USD 21.49 billion in 2023 and showed a gradual increase during the forecast period.\n\n## Regional Analysis\n\nNorth America is estimated to contribute 38.2% to the growth of the global market during the forecast period.Technavio’s analysts have elaborately explained the regional trends and drivers that shape the market during the forecast period.\n\nSee How Vertical AI Market Demand is Rising in North America Get Free Sample\n\nNorth America is projected to contribute 38.2% of the market's incremental growth, leading global adoption of industry-specific AI solutions. This dominance is fueled by substantial investments in AI applications in healthcare and AI in financial services.\n\nIn APAC, rapid digitalization is driving demand for AI for retail personalization and AI in manufacturing automation. European markets focus on regulatory technology AI, integrating AI governance tools to ensure compliance.\n\nThe widespread adoption of cloud-based AI platforms accelerates the deployment of customized generative AI and agentic automation globally. The use of AI-powered traffic management in AI for smart city infrastructure projects is a growing trend across regions.\n\nIn contrast, emerging economies are leveraging AI in agritech to address food security challenges, demonstrating the technology's versatile impact on diverse economic landscapes.\n\n## Market Dynamics\n\nOur researchers analyzed the data with 2024 as the base year, along with the key drivers, trends, and challenges. A holistic analysis of drivers will help companies refine their marketing strategies to gain a competitive advantage.\n\n- Rest of World (ROW)\n- The strategic implementation of vertical AI solutions for regulatory compliance is becoming a critical differentiator for businesses, especially as customizing large language models for finance and other regulated sectors gains momentum.\n- The choice between on-premises deployment of vertical AI solutions and cloud-based platforms for vertical AI often depends on data security needs and legacy system constraints, with enterprise AI integration with legacy systems being a key consideration. In industrial settings, AI-powered predictive maintenance in manufacturing is proven to reduce downtime more effectively than traditional methods.\n- Similarly, the impact of AI on customer service automation is profound, freeing human agents for complex tasks. Vertical AI applications in algorithmic trading are reshaping financial markets, while vertical AI for fraud detection systems provides an essential layer of security. The benefits of generative AI in pharmaceutical drug discovery and using AI models for clinical diagnostics are accelerating healthcare innovation.\n- In retail, the benefits of AI in retail personalization are clear, and how AI improves supply chain automation is a central focus for logistics firms.\n- From automotive AI systems for autonomous vehicles to AI-driven credit scoring for financial inclusion using advanced machine learning models for credit underwriting, and even AI applications in legal contract analysis, specialized AI is creating tangible value. The adoption of vertical AI implementation in precision agriculture and the role of vertical AI in smart grids further highlight its transformative potential.\n\n### What are the key market drivers leading to the rise in the adoption of Vertical AI Industry?\n\n- The increasing demand for specialized, domain-specific solutions that address unique industry challenges is a key driver fueling market growth.\n\n- The demand for industry-specific AI solutions that address complex, domain-specific challenges is a primary market driver.\n- Businesses are moving beyond generic platforms to adopt AI applications in healthcare and AI in financial services that deliver measurable results, such as enhanced clinical decision-making and robust real-time fraud detection.\n- The proliferation of big data, combined with advancements in deep learning models, fuels this trend. In manufacturing, AI for supply chain optimization and AI-powered quality control are becoming essential for maintaining a competitive edge.\n- North America’s market leadership, contributing 38.2% to incremental growth, underscores the strong demand.\n- Yet, the talent gap remains a significant factor, with 61% of firms citing a lack of expertise, which ironically drives the need for more intuitive vertical SaaS solutions.\n\n### What are the market trends shaping the Vertical AI Industry?\n\n- The proliferation of generative AI within core vertical operations is an emerging trend. This evolution is reshaping industry-specific workflows and creating new opportunities for innovation.\n\n- Key trends are reshaping the market, led by the integration of vertical generative AI into core operations. This shift enables hyper-personalization at scale and drives the development of advanced AI-powered diagnostics and predictive maintenance AI.\n- While AI in legal technology and AI for drug discovery showcase significant innovation, adoption is constrained by talent shortages, with 61% of firms reporting a lack of experience with relevant tools. The growth of AI in entertainment and media and AI in aerospace and defense highlights the technology's expanding footprint.\n- The market's momentum is evident in regions like North America, which accounts for 38.2% of incremental growth. This is driven by sophisticated algorithmic trading systems and the adoption of AI-powered traffic management in smart cities, supported by enterprise-focused AI hardware and specialized AI chips.\n\n### What challenges does the Vertical AI Industry face during its growth?\n\n- High implementation costs and the intrinsic complexity of deploying customized AI solutions present a key challenge affecting widespread industry adoption.\n\n- Significant challenges temper market growth, primarily vertical AI implementation costs and persistent data privacy in AI systems. A recent breach that exposed 190 million patient records underscores the critical need for robust AI for cybersecurity threats and effective AI model risk management.\n- Furthermore, a pervasive talent shortage is a major obstacle; a survey revealed that 61% of firms lack experience with essential AI tools, and 53% struggle with integrating new technology into legacy systems.\n- This skills gap complicates both on-premises AI deployment and the management of cloud-based AI platforms, hindering progress in areas like AI in insurance claims processing and AI for credit risk analysis. These vertical AI adoption challenges require strategic investment in both technology and workforce development.\n\n### Exclusive Technavio Analysis on Customer Landscape\n\nThe vertical ai market forecasting report includes the adoption lifecycle of the market, covering from the innovator’s stage to the laggard’s stage. It focuses on adoption rates in different regions based on penetration. Furthermore, the vertical ai market report also includes key purchase criteria and drivers of price sensitivity to help companies evaluate and develop their market growth analysis strategies.\n\nCustomer Landscape of Vertical AI Industry\n\n## Competitive Landscape\n\nCompanies are"
+                      },
+                      {
+                        "title": "The 2025 AI Index Report | Stanford HAI",
+                        "url": "https://hai.stanford.edu/ai-index/2025-ai-index-report",
+                        "publishedDate": null,
+                        "snippet": "Skip to content\n\nAbout About\n\nResearch Research\n\nEducation Education\n\nPolicy Policy\n\nAI Index AI Index\n\n- AI Index\n- AI Index Report\n- Global Vibrancy Tool\n- People\n\n### Stay Up To Date\n\nGet the latest news, advances in research, policy work, and education program updates from HAI in your inbox weekly.\n\nSign Up For Latest News\n\nHAI Stanford University Human-Centered Artificial Intelligence\n\n- HAI Stanford HAI on x\n- HAI Stanford HAI on facebook\n- HAI Stanford HAI on youtube\n- HAI Stanford HAI on linkedin\n- HAI Stanford HAI on instagram\n\n###### Navigate\n\n- About\n- Events\n- AI Glossary\n- Careers\n- Search\n\n###### Participate\n\n- Get Involved\n- Support HAI\n- Contact Us\n\nThe 2025 AI Index Report | Stanford HAI\n\nYour browser does not support the video tag.\n\n# The 2025 AI Index Report\n\nRead the 2025 AI Index Report Watch Seminar\n\nAccess the Public Data\n\n## Past Reports\n\nSkip Carousel Content\n\n#### The 2026 AI Index Report\n\nhttps://hai.stanford.edu/ai-index/2026-ai-index-report\n\n#### The 2024 AI Index Report\n\nhttps://hai.stanford.edu/ai-index/2024-ai-index-report\n\nWelcome to the seventh edition of the AI Index report. The 2024 Index is our most comprehensive to date and arrives at an important moment when AI’s influence on society has never been more pronounced.\n\n#### The 2023 AI Index Report\n\nhttps://hai.stanford.edu/ai-index/2023-ai-index-report\n\nThe AI Index is an independent initiative at the Stanford Institute for Human-Centered Artificial Intelligence (HAI), led by the AI Index Steering Committee, an interdisciplinary group of experts from across academia and industry.\n\n#### The 2022 AI Index Report\n\nhttps://hai.stanford.edu/ai-index/2022-ai-index-report\n\nThe AI Index is an independent initiative at the Stanford Institute for Human-Centered Artificial Intelligence (HAI), led by the AI Index Steering Committee, an interdisciplinary group of experts from across academia and industry.\n\n#### The 2021 AI Index Report\n\nhttps://hai.stanford.edu/ai-index/2021-ai-index-report\n\nThis year we significantly expanded the amount of data available in the report, worked with a broader set of external organizations to calibrate our data, and deepened our connections with Stanford HAI.\n\n#### The 2019 AI Index Report\n\nhttps://hai.stanford.edu/ai-index/2019-ai-index-report\n\nThe AI Index Report tracks, collates, distills, and visualizes data relating to artificial intelligence.\n\nIts mission is to provide unbiased, rigorous, and comprehensive data for policymakers, researchers, journalists, executives, and the general public to develop a deeper understanding of the complex field of AI.\n\n#### The 2018 AI Index Report\n\nhttps://hai.stanford.edu/ai-index/2018-ai-index-report\n\nArtificial Intelligence has leapt to the forefront of global discourse, garnering increased attention from practitioners, industry leaders, policymakers, and the general public. The diversity of opinions and debates gathered from news articles this year illustrates just how broadly AI is being investigated, studied, and applied. However, the field of AI is still evolving rapidly and even experts have a hard time understanding and tracking progress across the field.\n\n#### The 2017 AI Index Report\n\nhttps://hai.stanford.edu/ai-index/2017-ai-index-report\n\nArtificial Intelligence has leapt to the forefront of global discourse, garnering increased attention from practitioners, industry leaders, policymakers, and the general public. The diversity of opinions and debates gathered from news articles this year illustrates just how broadly AI is being investigated, studied, and applied. However, the field of AI is still evolving rapidly and even experts have a hard time understanding and tracking progress across the field.\n\n### AI’s influence on society has never been more pronounced.\n\nAt Stanford HAI, we believe AI is poised to be the most transformative technology of the 21st century. But its benefits won’t be evenly distributed unless we guide its development thoughtfully. The AI Index offers one of the most comprehensive, data-driven views of artificial intelligence. Recognized as a trusted resource by global media, governments, and leading companies, the AI Index equips policymakers, business leaders, and the public with rigorous, objective insights into AI’s technical progress, economic influence, and societal impact.\n\n---\n\n#### New this Year: The Official Chinese Version of the 2025 AI Index Report\n\nRead the translation\n\n## Top Takeaways\n\n### 1. AI performance on demanding benchmarks continues to improve.\n\nIn 2023, researchers introduced new benchmarks—MMMU, GPQA, and SWE-bench—to test the limits of advanced AI systems. Just a year later, performance sharply increased: scores rose by 18.8, 48.9, and 67.3 percentage points on MMMU, GPQA, and SWE-bench, respectively. Beyond benchmarks, AI systems made major strides in generating high-quality video, and in some settings, language model agents even outperformed humans in programming tasks with limited time budgets.\n\n### 2. AI is increasingly embedded in everyday life.\n\nFrom healthcare to transportation, AI is rapidly moving from the lab to daily life. In 2023, the FDA approved 223 AI-enabled medical devices, up from just six in 2015. On the roads, self-driving cars are no longer experimental: Waymo, one of the largest U.S. operators, provides over 150,000 autonomous rides each week, while Baidu’s affordable Apollo Go robotaxi fleet now serves numerous cities across China.\n\n### 3. Business is all in on AI, fueling record investment and usage, as research continues to show strong productivity impacts.\n\nIn 2024, U.S. private AI investment grew to $109.1 billion—nearly 12 times China’s $9.3 billion and 24 times the U.K.’s $4.5 billion. Generative AI saw particularly strong momentum, attracting $33.9 billion globally in private investment—an 18.7% increase from 2023. AI business usage is also accelerating: 78% of organizations reported using AI in 2024, up from 55% the year before. Meanwhile, a growing body of research confirms that AI boosts productivity and, in most cases, helps narrow skill gaps across the workforce.\n\n### 4. The U.S. still leads in producing top AI models—but China is closing the performance gap.\n\nIn 2024, U.S.-based institutions produced 40 notable AI models, significantly outpacing China’s 15 and Europe’s three. While the U.S. maintains its lead in quantity, Chinese models have rapidly closed the quality gap: performance differences on major benchmarks such as MMLU and HumanEval shrank from double digits in 2023 to near parity in 2024. Meanwhile, China continues to lead in AI publications and patents. At the same time, model development is increasingly global, with notable launches from regions such as the Middle East, Latin America, and Southeast Asia.\n\n### 5. The responsible AI ecosystem evolves—unevenly.\n\nAI-related incidents are rising sharply, yet standardized RAI evaluations remain rare among major industrial model developers. However, new benchmarks like HELM Safety, AIR-Bench, and FACTS offer promising tools for assessing factuality and safety. Among companies, a gap persists between recognizing RAI risks and taking meaningful action. In contrast, governments are showing increased urgency: In 2024, global cooperation on AI governance intensified, with organizations including the OECD, EU, U.N., and African Union releasing frameworks focused on transparency, trustworthiness, and other core responsible AI principles.\n\n### 6. Global AI optimism is rising—but deep regional divides remain.\n\nIn countries like China (83%), Indonesia (80%), and Thailand (77%), strong majorities see AI products and services as more beneficial than harmful. In contrast, optimism remains far lower in places like Canada (40%), the United States (39%), and the Netherlands (36%). Still, sentiment is shifting: since 2022, optimism has grown significantly in several previously skeptical countries—including Germany (+10%), France (+10%), Canada (+8%), Great Britain (+8%), and the United States (+4%).\n\n### 7. AI becomes more efficient, affordable and accessible.\n\nDriven by increasingly capable small models, the inference cost for a system performing at the level of GPT-3.5 dropped over 280-fold between November 2022 and October 2024. At the hardware level, costs have declined by 30% annually, while energy efficiency has improved by 40% each year. Open-weight models are also closing the gap with closed models, reducing the performance difference from 8% to just 1.7% on some benchmarks in a single year. Together, these trends are rapidly lowering the barriers to advanced AI.\n\n### 8. Governments are stepping up on AI—with regulation and investment.\n\nIn 2024, U.S. federal agencies introduced 59 AI-related regulations—more than double the number in 2023—and issued by twice as many agencies. Globally, legislative mentions of AI rose 21.3% across 75 countries since 2023, marking a ninefold increase since 2016. Alongside growing attention, governments are investing at scale: Canada pledged $2.4 billion, China launched a $47.5 billion semiconductor fund, France committed €109 billion, India pledged $1.25 billion, and Saudi Arabia’s Project Transcendence represents a $100 billion initiative.\n\n### 9. AI and computer science education is expanding—but gaps in access and readiness persist.\n\nTwo-thirds of countries now offer or plan to offer K–12 CS education—twice as many as in 2019—with Africa and Latin America making the most progress. In the U.S., the number of graduates with bachelor’s degrees in computing has increased 22% over the last 10 years. Yet access remains limited in many African countries due to basic infrastructure gaps like electricity. In the U.S., 81% of K–12 CS teachers say AI should be part of foundational CS education, but less than half feel equipped to teach it.\n\n### 10. Industry is racing ahead in AI—but the frontier is tightening.\n\nNearly 90% of notable AI models in 2024 came from industry, up from 60% in 2023, while academia remains the top source of highly cited research. Model scale continues to grow rapidly—training compute doubles every five months, datasets every eight, and power use annually. Yet performance gaps are shrinking: the score difference between the top and 10th-ranked models fell from 11.9% to 5.4% in a year, and the top two are now separated by just 0.7%. The frontier is increasingly competitive—and increasingly crowded.\n\n### 11. AI earns top honors for its impact on science.\n\nAI’s growing importance is reflected in major scientific awards: two Nobel Prizes recognized work that led to deep learning (physics), and to its application to protein folding (chemistry), while the Turing Award honored groundbreaking contributions to reinforcement learning.\n\n### 12. Complex reasoning remains a challenge.\n\nAI models excel at tasks like International Mathematical Olympiad problems but still struggle with complex reasoning benchmarks like PlanBench. They often fail to reliably solve logic tasks even when provably correct solutions exist, limiting their effectiveness in high-stakes settings where precision is critical.\n\n## Measuring trends in Intelligence\n\nThe AI Index report tracks, collates, distills, and visualizes data related to artificial intelligence (AI). Our mission is to provide unbiased, rigorously vetted, broadly sourced data in order for policymakers, researchers, executives, journalists, and the general public to develop a more thorough and nuanced understanding of the complex field of AI.\n\nSee Also: Report Revisions\n\n## Policy Highlights\n\nPolicymakers use the AI Index to inform their understanding and decisions about AI. We curated a summary of highlights from the AI Index Report 2025 that are particularly relevant to policymakers and other policy audiences.\n\nDownload the Policy Highlights\n\nSkip Carousel Content\n\n## Chapter Lineup\n\n#### Chapter 1: Research and Development\n\nhttps://hai.stanford.edu/ai-index/2025-ai-index-report/research-and-development\n\nThis cha"
+                      },
+                      {
+                        "title": "AI Disruption & Opportunity",
+                        "url": "https://advisors.ubs.com/mediahandler/media/711682/ai-disruption-and-opportunity.pdf",
+                        "publishedDate": null,
+                        "snippet": "### A sector-by-sector guide for entrepreneurs\n\nChief Investment Office GWM Investment Research\n\nAI disruption and opportunity: A sector-by-sector guide for entrepreneurs\n\nThis report was produced by UBS Switzerland AG and UBS Financial Services Inc. (UBS FS). Please note the important legal notes and disclosures at the end of this document.\n\nAuthors: \nAchille Monnet, Kevin Dennean, Sundeep Gantori, \nDelwin-Kurnia Limas \n\nPublication date: 21 May 2025\n\nDesktop Publishing: CIO Content Design\n\nCover photo: UBS\n\nContact: ubs.com/cio\n\n## Introduction\n\n• Generative artificial intelligence (genAI) has the potential to transform industries. We view this technology transition as a platform shift, owing to the underlying per formance of the technology and its ubiquitous applicability. \n• As use cases continue to be defined, we see genAI broadening outside of the technology sector to have wide-reaching implications. Moreover, entrepreneurs need to remember that the underlying technology is improving at a rapid pace and being embraced by new industries. We believe underlying model improvements will expand the total addressable market of genAI. \n\n• We believe culture will be a key determinant as to which firms capture the value from genAI rather than be disrupted by it over the long term. In the near term, we're\n\nmonitoring to see whether the scaling laws are holding.\n\nThe range of problems that artificial intelligence (AI) can address keeps growing, enhancing the productivity of know ledge workers every day 1. With 1 billion knowledge workers worldwide, the productivity gains could easily surpass that of the internet—possibly making it one of the biggest investment opportunities over the next decades. The poten tial of this new productivity boom has kicked off a capex cycle to build AI data centers that will likely surpass the size of traditional data centers in the next few years. We view these investments as sustainable, given the rate of underly ing model improvements is expanding the long-term reve nue potential of this technology at an accelerating rate. Moreover, we see the early returns on investment data points as healthy and would note that, in fact, the average return on total capital across the Big 4 (Alphabet, Amazon, Meta, and Microsoft) grew from 22% in 2022 to 29% in 2024 (see Figure 1).\n\n¹ High-level workers who apply theoretical and analytical knowledge, acquired through formal training, to develop products and services\n\nFigure 1\n\nBig 4 average return on total capital 2022-2024\n\nin %\n\nSource: Factset, UBS estimates, company reports\n\n2022\n\n22.24\n\n29.43\n\n25.80\n\n2023 2024\n\nReturn on total capital\n\n0\n\n5\n\n10\n\n15\n\n20\n\n25\n\n30\n\nAcross the sectors, we also see good growth in productivity as measured by revenue per employee over the 2022-24 period. Indeed, all major sectors saw healthy annualized growth in this metric (see Figure 2), which we view as partly driven by AI—particularly in the TMT (technology, media, and telecommunications) sectors, as these are the first to be expo sed to genAI—and as a strong indicator of AI’s potential.\n\nThe early superpowers of the LLMs (large language models) include coding, digital advertising, and customer care. On coding and digital advertising: Alphabet disclosed several quarters ago that its internal genAI models are now writing 25% of all their engineers’ code, whereas Meta has announ ced that genAI models have increased engagement on Face book and Instagram by 6% and 8%, respectively, as well as conversion by 7%.\n\nWe continue to view the enabling layer, which we define as AI-linked semiconductors and cloud computing platforms, as the most attractive positioning within genAI as the pace of infrastructure buildout should continue to be supported by AI model improvements and monetization. We also see less disruption risk on the enabling layer given the consolidated nature of the industry, attractive valuations, and visibility into strong near-term growth. These should result in robust returns on investment and favor our top-down market esti mate for a USD 1.1tr revenue opportunity across the ena bling, model, and intelligence layers by 2027.\n\nFor private companies, we see greater potential in the appli cation layer as genAI simplifies and empowers smaller teams to have outsized impact. We have seen faster time to signifi cant revenues, smaller teams achieving unicorn status, and fewer years to achieve unicorn status for AI native startups (see Figure 3).\n\nFor entrepreneurs, we expect the usage and implementation of genAI to offer more scope for startups to scale and dis rupt incumbents. Building genAI infrastructure hasn’t been disruptive on the supply side. This is largely due to the con solidated nature of semiconductors and cloud computing platforms as well as the capital intensity of developing genAI leading-edge technology. Indeed, the pre-training, post-trai ning, and test-time compute scaling laws mean that building genAI (as opposed to using it) is reserved for the most well capitalized businesses.\n\nFigure 2\n\nAnnual growth in revenue per employee for each of the sectors in scope For the companies in the S&P 500. In % change for 2022-2024\n\nSource: Refinitiv, UBS estimates\n\n10.40%\n\n6.7%\n\n3.5%\n\n6.1%\n\n5.4%\n\nCommunication services\n\nConsumer discretionary\n\nConsumer staples\n\nInformation technology\n\nIndustrials\n\nFigure 3\n\nAI vs. non-AI unicorns\n\nSource: CB Insights, UBS estimates as of December 2024\n\nMedian employees (Non-AI unicorns)\n\nMedian employees (AI unicorns)\n\n0\n\nEmployee count\n\n9 years to unicorn status\n\n2 years to unicorn status\n\n414\n\n202\n\nMedian years to unicorn status\n\nHowever, the usage of genAI should create new markets and thus potential for start-ups and entrepreneurs. We also note that the speed to scaled revenues for new genAI startups has strongly exceeded SaaS (software-as-a-service) startups from 2018 (see Figure 4). With the average AI star tup on Stripe reaching USD 5mn of annual recurring reve nue in 24 months versus 37 months for SaaS, this speed to scale represents a compelling opportunity for entrepreneurs, in our view.\n\nThus far, the benefits of genAI have been relatively concen trated, as those incumbents building the technology are also the first and best positioned to capture the value of genAI. We expect this to broaden as the cost of AI inferencing con tinues to fall. We would note that Deepseek represents an attractive development in this regard. Below, we summarize the main long-term implications that we see for genAI across most sectors. We expect some of the biggest impact to be in the technology, communication services, financial, and health care sectors, among others.\n\nFigure 4\n\nAI vs. SaaS companies time to scale to USD 5mn of annualised recurring revenue (ARR) in months\n\nSource: Stripe 2024 Annual letter, UBS\n\n0\n\n1\n\n2\n\n3\n\n4\n\n5\n\nAI companies revenue (USD mn) SaaS companies revenue (USD mn)\n\n5 10 15 20 25 30 35 40\n\n## Sector overview\n\nAutomobiles\n\nGenerative AI is poised to impact the automotive industry across its entire value chain, from R&D to after-sales services. The primary effects will be reduced costs and lower entry bar riers, with limited immediate revenue opportunities. The indus try faces only temporary margin improvement because of intense competitive pressure as well as new entrants like Chi nese companies and potentially tech firms. Suppliers face intense price competition, keeping margins low despite pro ductivity gains, and AI is unlikely to change this significantly.\n\nRevenue opportunities from AI are limited, with in-car entertain ment features offering some potential, though consumers may pre fer their handheld devices. We believe autonomous driving tech nology, particularly full self-driving (FSD), presents the greatest opportunity, as vehicles already have the necessary hardware. However, achieving full automation (level 4 for personal vehicles and level 5 for robotaxi services) faces significant legal and tech nological challenges.\n\nAI-driven productivity gains could be substantial across the value chain. Auto companies spend heavily on R&D, and generative AI could enhance design and R&D efficiency, reducing expenses over time. AI could further optimize production processes, purchasing, and logistics planning. While the impact on the blue-collar sector is likely limited, white-collar sectors could see significant efficiency gains, particularly in product planning, sales, and pricing. Predictive power could improve repair assessments and spare parts planning, while personalized marketing could enhance sales campaigns.\n\nFor consumers, software increasingly shapes vehicles more than hardware. Autonomous driving technology and entertain ment systems now play a key role in purchasing decisions. Vir tual and augmented reality may enhance navigation, and voice-controlled systems are becoming common. Privacy and data security concerns are becoming paramount as modern cars generate vast amounts of data.\n\nAI is primarily a cost-efficiency tool, potentially lowering costs across the value chain. Electric powertrains have reduced indus try entry barriers, benefiting disruptors from Asia. However, AI could disrupt these disruptors, as incumbents leverage techno logy to improve their competitive positioning. Companies could see their market share leads quickly competed away, maintai ning pressure on pricing and margins.\n\nCommunication services\n\nGenerative AI presents diverse opportunities across the communi cation services sector. Interactive media companies are leveraging AI to enhance user engagement and boost advertising revenue, positioning them as beneficiaries in the coming years. Conversely, the media and entertainment industry faces challenges, as poten tial cost savings from AI may be countered by declining viewership and engagement. Telecom companies remain largely unaffected by generative AI other than the benefits to customer care servi cing. However, within the telecom industry, we expect most of the value accrued from AI to flow to the consumer.\n\nAI offers new revenue opportunities, particularly for internet companies, through increased engagement monetized via advertising. However, entertainment companies may experience mixed trends; while AI can aid in creating compelling content, it may also democratize content creation, posing challenges for media and entertainment firms. Traditional media may continue to be overshadowed by online content.\n\nGenerative AI could modestly improve sector margins. Internet companies, already utilizing AI extensively, may see limited mar gin gains. Media and entertainment firms might achieve cost savings from AI-generated content, but these could be offset by reduced revenue. Telecom companies might experience slight margin improvements through AI-enhanced customer care.\n\nWe expect the industry structure within communication services to remain stable. The internet industry, already concentrated, may benefit from scale effects. Generative AI could lower entry barriers for media and entertainment, aligning with Web 2.0 and internet adoption. The telecom industry, a competitive industry, is unlikely to be reshaped by AI.\n\nOverall, the communication services sector should modestly benefit from AI adoption. The internet industry, a major reve nue and profit contributor, stands to gain, while media and entertainment may face limited headwinds.\n\nConsumer staples\n\nAI is enhancing productivity in the consumer staples sector by driving production efficiency, sales planning, and supply chain optimization. It aids in tracking inventory, predicting demand, and improving shipment routes, which minimizes waste and optimizes logistics, leading to reduced transportation costs and improved delivery times. AI-powered quality control ensures consistent product quality through real-time monitoring. Auto mation of repetitive tasks and better-integrated systems result in cost reductions and improved efficiency. For instance, Carre four uses AI to predict demand accur"
+                      },
+                      {
+                        "title": "AI Trends 2025 - by Kenn So - Generational",
+                        "url": "https://www.generational.pub/p/ai-trends-2025",
+                        "publishedDate": "2025-12-30T22:51:25.000Z",
+                        "snippet": "AI Trends 2025 - by Kenn So - Generational\n\nSubscribeSign in\n\nTrends\n\n# AI Trends 2025\n\n### AI agents crossed the chasm\n\nDec 30, 2025\n\n60\n\n6\n\n11\n\nShare\n\nThe AI Trends 2025 report is here—fully updated through 12/30/2025. It’s 100+ pages covering everything from the macro picture down to scaling laws, with proprietary analysis throughout. There’s also a market map of over 1,800 AI startups, highlighting the top 10% that matter most.\n\nThis article is a summary of the report’s key findings, with screenshots and the AI agent market map. For the full report & database:\n\nMultimedia and PDF versions of the report: link\n\nAI agent market map: link or head to the bottom of the article\n\n---\n\n## Key Themes from the 2025 AI Trends report\n\n### From Experiment to Economic Engine\n\nThis is the fourth edition of my annual AI Trends report. I started writing these in 2022, before ChatGPT launched, and watching this technology evolve from academic curiosity to economic force has been something else.\n\nThis year’s report is titled “Crossing the Chasm” because that’s what the data shows: generative AI has moved from early adopters into mainstream production use. It’s no longer about potential—it’s generating real revenue, displacing real labor, and running into real physical constraints.\n\nWhat follows are the findings I think matter most.\n\n### 1. AI Agents Are Matching Human Professionals\n\nThe shift from AI-as-assistant to AI-as-worker is showing up in benchmarks now. The GDPVal benchmark tests whether AI can produce professional-grade deliverables—things like 3D engineering models and financial analyses. The latest results: GPT-5.2 matches or beats human experts (with an average of 14 years of experience) 70.9% of the time.\n\nThe economics are stark. For a range of knowledge work, AI agents are now over 20x cheaper for basic tasks and more than 3x cheaper for advanced work like programming and creative writing.\n\nThis is already affecting hiring:\n\nEmployment for workers ages 22-25 in highly exposed roles (software development, customer service) has fallen sharply\n\nJob postings for AI-exposed roles are down 12% relative to less exposed roles\n\nWhen surveyed, companies report AI-driven headcount reductions most often in Engineering (42%), CS & Support (27%), and Marketing (26%)\n\n### 2. Energy Is the Bottleneck\n\nFor all the focus on algorithms and chips, power is emerging as the binding constraint.\n\nEpoch AI found that while chip manufacturing could theoretically support an 80,000x increase in training compute by 2030, power constraints cap that at around 10,000x. Energy is the tightest limit by a wide margin.\n\nThis isn’t just theoretical. 92% of senior data center professionals now cite utility power availability as a major barrier. 44% face wait times of four years or more for grid connections. Some are building their own on-site generation—gas turbines, even small modular nuclear reactors.\n\n### 3. Adoption Is Faster Than Any Technology We’ve Measured\n\nBy mid-2025, 55% of US adults had used a generative AI product. That’s a faster adoption curve than the internet or the smartphone.\n\nThe products driving this:\n\nChatGPT: 900 million weekly active users, >$12B ARR. It’s become the default brand for AI the way Google is for search.\n\nClaude Code: $1B revenue run rate six months after launch. This is the clearest commercial proof that autonomous agents can replace high-value professional work at scale.\n\nSora 2 & Nano Banana: High-fidelity video and image generation moved from novelty to genuine creative tool for millions of users.\n\n### 4. Acquisitions Are the Exit Path, Not IPOs\n\nAI exit activity increased 44% from 2023 to 2025, but the biggest value is going to Big Tech acquirers, not new public companies.\n\nThe interesting dynamic: incumbents are using licensing and acqui-hire structures to sidestep antitrust scrutiny. Microsoft’s deal with Inflection AI became the template—they hired the key employees and licensed the technology without a formal acquisition. It effectively transfers the most important assets while avoiding regulatory review.\n\n### 5. Is This a Bubble? It’s Complicated.\n\nValuations are high—95th percentile on the Goldman Sachs bubble framework. But other indicators that typically precede crashes (profit decline, credit risk, leverage) remain healthy. High valuations alone don’t cause crashes; deteriorating fundamentals do.\n\nThe new risk factor is asset lifespan. The telecom bubble left behind fiber optic cable with a 25-30 year useful life. The AI boom is built on GPUs with 2-4 year lifespans that depreciate fast as new chips release. That makes the capital stack more fragile and more dependent on continuous external financing.\n\nI’d call the fundamentals healthy but the financing structure worth watching closely.\n\n### 6. Where the Next Wave of Startups Will Come From\n\nThe framework I use: map job tasks by automation feasibility against total wages paid for that role. High feasibility + large wage pool = attractive target for agentic AI companies.\n\nThis worked well in practice. The high-potential roles I flagged in last year’s report (software developers, financial managers, legal professionals) attracted the most VC and produced the fastest-growing startups—Cursor, Harvey, etc.\n\n### Closing\n\nThe data on adoption, labor displacement, and infrastructure strain all point the same direction. The open questions are about pace and constraints—how fast energy infrastructure can scale, how financing structures hold up, and which verticals see the most disruption next.\n\nThere’s a lot more in the full report: deeper dives on scaling laws, sector-by-sector breakdowns, and a market map of 1,800+ AI startups. What I’ve covered here are just the findings I thought deserved the most attention.\n\n---\n\nThanks for reading! If you enjoyed this report, please consider subscribing to get the latest research.\n\nSubscribe\n\n---\n\n## Full Report\n\n---\n\n## Agent Market Map: 1,800 companies and the top 10% that matter the most\n\n60\n\n6\n\n11\n\nShare\n\nPrevious\n\n#### Discussion about this post\n\nCommentsRestacks\n\n4 more comments...\n\nNo posts\n\n### Ready for more?\n\nSubscribe\n\n© 2026 Kenn · Privacy∙ Terms∙ Collection notice\n\nStart your Substack Get the app\n\nSubstack is the home for great culture"
+                      },
+                      {
+                        "title": "Generative AI Outlook 2025: Market Size, Trends, Forecast & Strategic Insights",
+                        "url": "https://www.marketsandmarkets.com/Market-Reports/generative-ai-outlook-2025-145595771.html",
+                        "publishedDate": null,
+                        "snippet": "Generative AI Outlook 2025: Market Size, Trends, Forecast & Strategic Insights \n\nWe use cookies to enhance your experience. By continuing to visit this site you agree to our use of cookies . More info. X close\n\n \n\n- Home\n- Information and Communications Technology\n- Generative AI Outlook 2025\n\n# Generative AI Outlook 2025: Global Market Forecast, Enterprise Trends, and Strategic Opportunities\n\n \n\nReport Code FUT 9312\n\nPublished in Feb, 2025, By MarketsandMarkets™\n\nDownload PDF\n\n \n\nChoose License Type\n\nSINGLE USER $4950\n\nCORPORATE LICENSE $8150\n\nBuy Report Now Inquire Before Buying\n\n \n\n1\n\n7500+ companies worldwide approach us every year for their revenue growth initiatives\n\n2\n\n80% of Fortune 2000 companies rely on our research to identify new revenue sources\n\n3\n\nTop 2000 strategists around the world rely on us for their growth roadmap/initiatives\n\n- Trending Insights\n- \n\n \n\n## Generative AI Outlook 2025 – Shaping the Future of Creative Intelligence\n\n- DESCRIPTION\n- TABLE OF CONTENTS\n- METHODOLOGY\n- DOWNLOAD REPORT SAMPLE\n\n \n\n## Generative AI Outlook 2025\n\nThe global IT spending on devices, data center systems, enterprise software, IT services, and communication services is projected to surge to USD 5.7 trillion by 2025, reflecting a strong 9.3% growth over 2024. Significant shifts in the IT landscape are being driven by the rise of cloud computing, AI integration, and innovations in cybersecurity. According to various sources, In 2024, investments in AI skyrocketed, as enterprise expenditure rose from an estimated USD 2 billion in 2023 to more than USD 13 billion, fueled by advancements in model efficiency and real-world uses. Generative AI is reshaping daily operations, from programming to healthcare, as enterprises integrate tools that boost efficiency and creativity. The US leads AI innovation, producing more than 60% of notable AI models globally. Meanwhile, AI adoption in retail is rising, with approximately 50% more spending beyond IT budgets, fueling ecosystem platforms for collaboration. This has led to significant progress but still falls short in terms of governance, where less than 25% of the organizations are successful in managing risks like bias and transparency. The future looks brighter as firms start adopting the transformative power of AI through innovation, productivity, and global competitiveness.\n\nMarketsandMarkets estimates that the global generative AI market size is projected to grow from USD 20.9 billion in 2024 to USD 32.2 billion by 2025 – up 53.7% year-over-year. Multimodal AI systems integrate multiple data modalities and unlock new possibilities in entertainment, marketing, and education. Also, diffusion models enhance the quality and precision of outputs, fueling creativity. With more than 70% of businesses already adopting generative AI for efficiency, this market is evolving into a powerhouse for automation, personalization, and innovation.\n\nSHOW MORE\n\n2024:\n\nMultimodal Generative AI– Multimodal AI integrates text, image, video, and audio data for advanced applications. OpenAI's GPT-4 and Google's Gemini aim to enhance cross-modal understanding. Industry leaders collaborate on multimodal models for healthcare, customer support, and content creation.\n\nExplainable Generative AI– Explainability ensures transparency in generative models. Startups like Fiddler AI and initiatives by Google DeepMind improve understanding of AI decision-making. Regulations like the EU AI Act emphasize explainable AI, driving adoption in BFSI and legal compliance.\n\nAdvancements in Generative Design– Generative design aids industries like architecture and manufacturing. Companies like Autodesk integrate AI to optimize design workflows. Partnerships, such as between NVIDIA and Siemens, bring real-time simulation and AI-driven prototyping to engineers.\n\nGenerative AI for Hyper-Personalization– AI tailors user experiences with granular insights. Adobe and Salesforce integrate generative AI for personalized marketing campaigns. E-commerce platforms implement advanced recommendation engines for customer-centric strategies.\n\nHuman in the Generative AI Loop– Human-AI collaboration ensures creative and ethical outputs. Companies like Microsoft emphasize augmented intelligence in Copilot tools. Training data validation and real-time supervision are gaining traction in sectors like content moderation and legal reviews.\n\n2025:\n\nConvergence of Generative AI and IoT– Generative AI enhances IoT by generating predictive insights. Partnerships, like AWS and Siemens, focus on smart manufacturing. AI-enabled IoT devices optimize energy usage and enhance user interfaces in smart cities.\n\nThe Rise of Retrieval-Augmented Generation– Retrieval-based models like OpenAI’s ChatGPT enhance accuracy by fetching real-time knowledge. Enterprises integrate this for contextual insights in customer service and R&D. Key players like Cohere improve document summarization via retrieval-augmented tools.\n\nAI-Infused to AI-First Applications– Transitioning from AI-infused features to fully AI-centric apps reshapes workflows. Microsoft’s AI-first Teams platform and Google's AI-first Workspace tools enhance productivity and collaboration. Startups leverage AI-first principles for innovative SaaS applications.\n\nGenerative User Interfaces Drive Next-Gen User Experience– AI-powered interfaces like voice and gesture controls redefine user interaction. Apple, Meta, and NVIDIA innovate in creating intuitive, AI-enabled UX for gaming, AR/VR, and wearable tech. Such interfaces promote accessibility and usability globally.\n\nTOP GROWTH OPPORTUNITIES:\n\n- Generative AI offers tailored treatment plans, drug discovery acceleration, and medical image analysis, driving improved patient outcomes and operational efficiency.\n- Generative AI revolutionizes digital content by automating video editing, scriptwriting, and game design, reducing costs and enabling faster creative workflows.\n- Generative AI creates adaptive learning platforms, virtual tutors, and realistic training simulations, transforming traditional education and upskilling industries.\n- Enhanced fraud detection, automated risk analysis, and financial advisory solutions revolutionize banking, insurance, and wealth management processes.\n- Predictive demand models, inventory management systems, and streamlined logistics increase efficiency and resilience in global supply chains.\n- Use cases such as content generation & personalization, drug discovery & healthcare solutions, customer service automation, and generative design in manufacturing will witness higher spending growth.\n\nWe have analyzed the key trends in our Global Generative AI Outlook 2024 project that can help AI professionals and business leaders prepare investments for the coming year.\n\n >>>>> -->\n\n \n\n \n\n#### Personalize This Research\n\n- Triangulate with your Own Data\n- Get Data as per your Format and Definition\n- Gain a Deeper Dive on a Specific Application, Geography, Customer or Competitor\n- Any level of Personalization\n\n Request A Free Customisation\n\n#### Let Us Help You\n\n- What are the Known and Unknown Adjacencies Impacting the Generative AI Outlook 2025\n- What will your New Revenue Sources be?\n- Who will be your Top Customer; what will make them switch?\n- Defend your Market Share or Win Competitors\n- Get a Scorecard for Target Partners\n\n Customized Workshop Request\n\n \n\n#### Table of Contents\n\nExclusive indicates content/data unique to MarketsandMarkets and not available with any competitors.\n\n \n\nTITLE\n\nPAGE NO\n\nEXECUTIVE SUMMARY\n\n1\n\n- 1.1 TOP DEVELOPMENTS IN 2024\n- 1.2 KEY PREDICTIONS FOR 2025\n\nRESEARCH SCOPE, OBJECTIVES, AND METHODOLOGY\n\n2\n\n- 2.1 RESEARCH SCOPE\n- 2.2 STUDY OBJECTIVES, METHODOLOGY, AND KEY INFORMATION AREAS\n\nGLOBAL MACROECONOMIC ANALYSIS\n\n3\n\n- 3.1 GLOBAL AND REGIONAL ECONOMIC INDICATORS: REAL GDP & INFLATION RATE\n- 3.2 TOP TEN COUNTRIES’ MACROECONOMIC INDICATORS: REAL GDP GROWTH RATE & GDP PER CAPITA\n- 3.3 TOP TEN COUNTRIES’ CONSUMER-RELATED MACROECONOMIC INDICATORS\n- 3.4 GLOBAL FISCAL CHALLENGES\n- 3.5 GLOBAL TOP 15 TRENDS\n\nGLOBAL GENERATIVE AI IN 2024\n\n4\n\n- 4.1 GENERATIVE AI PERFORMANCE, 2023 VS 2024\n- 4.2 TOP TEN DEVELOPMENTS IN 2024\n- 4.3 COMPETITIVE ANALYSIS\n\nGLOBAL GENERATIVE AI IN 2025\n\n5\n\n- 5.1 TOP TEN GENERATIVE AI SPECIFIC TRENDS FOR 2025\n- 5.2 GENERATIVE AI PERFORMANCE IN 2025\n\nKEY GROWTH OPPORTUNITIES AND RECOMMENDATIONS\n\n6\n\nFINAL CONCLUSION AND KEY TAKEAWAYS\n\n7\n\nAPPENDIX\n\n8\n\n- 8.1 LEGAL DISCLAIMER\n\nABOUT MARKETSANDMARKETS\n\n9\n\nLEGAL DISCLAIMER\n\n10\n\n \n\n \n\n \n\n### Previous Versions of this Report\n\n \n\nCountry Code Afghanistan (+93)Aland Islands (+358)Albania (+355)Algeria (+213)American Samoa (+1684)Andorra (+376)Angola (+244)Anguilla (+1264)Antarctica (+0)Antigua and Barbuda (+1268)Argentina (+54)Armenia (+374)Aruba (+297)Australia (+61)Austria (+43)Azerbaijan (+994)Bahamas, The (+1242)Bahrain (+973)Bangladesh (+880)Barbados (+1246)Belarus (+375)Belgium (+32)Belize (+501)Benin (+229)Bermuda (+1441)Bhutan (+975)Bolivia (+591)Bonaire, Sint Eustatius and Saba (+599)Bosnia and Herzegovina (+387)Botswana (+267)Bouvet Island (+47)Brazil (+55)British Indian Ocean Territory (+246)Brunei (+673)Bulgaria (+359)Burkina Faso (+226)Burundi (+257)Cambodia (+855)Cameroon (+237)Canada (+01)Cape Verde (+238)Cayman Islands (+1345)Central African Republic (+236)Chad (+235)Chile (+56)China (+86)Christmas Island (+61)Cocos (Keeling) Islands (+672)Colombia (+57)Comoros (+269)Congo - the Democratic Republic of the (+242)Congo, Republic of the (+242)Cook Islands (+682)Costa Rica (+506)Cote d'Ivoire (+225)Croatia (+385)Cuba (+53)Curacao (+599)Cyprus (+357)Czech Republic (+420)Denmark (+45)Djibouti (+253)Dominica (+1767)Dominican Republic (+1809)Ecuador (+593)Egypt (+20)El Salvador (+503)Equatorial Guinea (+240)Eritrea (+291)Estonia (+372)Ethiopia (+251)Europe (+null)Falkland Islands (Malvinas) (+500)Faroe Islands (+298)Fiji (+679)Finland (+358)France (+33)French Guiana (+594)French Polynesia (+689)French Southern Territories (+262)Gabon (+241)Gambia (+220)Georgia (+995)Germany (+49)Ghana (+233)Gibraltar (+350)Greece (+30)Greenland (+299)Grenada (+1473)Guadeloupe (+590)Guam (+1671)Guatemala (+502)Guernsey (+44)Guinea-Bissau (+245)Guyana (+592)Haiti (+509)Heard Island and McDonald Islands (+0)Holy See (Vatican City State) (+379)Honduras (+504)Hong Kong (+852)Hungary (+36)Iceland (+354)India (+91)Indonesia (+62)Iran - Islamic Republic of (+98)Iraq (+964)Ireland (+353)Isle of Man (+44)Israel (+972)Italy (+39)Jamaica (+1876)Japan (+81)Jersey (+44)Jordan (+962)Kazakhstan (+7)Kenya (+254)Kiribati (+686)Korea, North (+850)Korea, South (+82)Kosovo (+383)Kuwait (+965)Kyrgyzstan (+996)Laos (+856)Latvia (+371)Lebanon (+961)Lesotho (+266)Liberia (+231)Libya (+218)Liechtenstein (+423)Lithuania (+370)Luxembourg (+352)Macau (+853)Macedonia (+389)Madagascar (+261)Malawi (+265)Malaysia (+60)Maldives (+960)Mali (+223)Malta (+356)Marshall Islands (+692)Martinique (+596)Mauritania (+222)Mauritius (+230)Mayotte (+262)Mexico (+52)Micronesia, Federated States of (+691)Moldova (+373)Monaco (+377)Mongolia (+976)Montenegro (+382)Montserrat (+1664)Morocco (+212)Mozambique (+258)Myanmar (+95)N Guinea (+224)Namibia (+264)Nauru (+674)Nepal (+977)Netherlands (+31)Netherlands Antilles (+599)New Caledonia (+687)New Zealand (+64)Nicaragua (+505)Niger (+227)Nigeria (+234)Niue (+683)Norfolk Island (+672)Northern Mariana Islands (+1670)Norway (+47)Oman (+968)Pakistan (+92)Palau (+680)Palestinian Territories (+970)Panama (+507)Papua New Guinea (+675)Paraguay (+595)Peru (+51)Philippines (+63)Pitcairn (+64)Poland (+48)Portugal (+351)Puerto Rico (+1787)Qatar (+974)Reunion (+262)Romania (+40)Russia (+70)Rwanda (+250)Saint Barthelemy (+590)Saint Helena, Ascension and Tristan da Cunha (+290)Saint Kitts and Nevis (+1869)Saint Lucia (+1758)Saint Martin (French part) (+590)Saint Pierre and Miquelon (+508)Saint Vincent and the Grenadines (+1784)Samoa (+684)San Marino (+378)Sao Tome and Principe (+239)Saudi Arabia (+966)Senegal (+221)Serbia ("
+                      },
+                      {
+                        "title": "2025 VC Emerging Opportunities - PitchBook",
+                        "url": "https://pitchbook.com/news/reports/2025-vc-emerging-opportunities",
+                        "publishedDate": "2026-02-23T19:24:21.000Z",
+                        "snippet": "2025 VC Emerging Opportunities - PitchBook\n\n2025\n\n# VC Emerging Opportunities\n\nFebruary 23, 2026\n\n| By Andrew Akers, CFA & Susan Hu\n\nDownload this Report\n\nTo download this report, please complete the form below\n\nGo to Form\n\nPitchBook clients can access this report’s Excel data pack via the Research Center on the PitchBook Platform.\n\nThe verticals leading the pack\n\nOur annual VC Emerging Opportunities report provides quantitative data for investors to stay on top of quickly shifting VC trends. The report includes both bottom-up and top-down analyses of 11 select analyst-covered verticals, from AI to agtech, gaming, and more.\n\nSaaS companies continue to be a positive standout, with very high exit probabilities calculated by our VC Exit Predictor and several early-stage investment opportunities. The report predicts underperformance from agtech, gaming, and healthtech, with individual analyses included for all 11 verticals in the report.\n\nTable of contents\n\n| The opportunity set | 4 |\n| --- | --- |\n| Bottom-up analysis | 9 |\n| Top-down analysis | 16 |\n| Cross-vertical summary | 23 |\n| Individual vertical analyses | 25 |\n| Appendix: Historical trends in top-down metrics | 115 |\n\nBy Andrew Akers, CFA | Susan Hu |\n\nFebruary 23, 2026"
+                      },
+                      {
+                        "title": "2025: The State of Consumer AI | Menlo Ventures",
+                        "url": "https://menlovc.com/perspective/2025-the-state-of-consumer-ai/",
+                        "publishedDate": "2025-06-26T13:00:00.000Z",
+                        "snippet": "2025: The State of Consumer AI | Menlo Ventures Skip to Main Content\n\nAll Perspectives\n\nPortfolioReportPerspective\n\n# 2025: The State of Consumer AI\n\nJune 26, 2025\n\nShawn Carolan, Amy Wu Martin, C.C. Gong, Sam Borja with Claude Sonnet 4\n\nTable of Contents\n\n### AI’s Consumer Tipping Point Has Arrived\n\nMore than half of American adults (61%) have used AI in the past six months, and nearly one in five rely on it every day. Scaled globally, that translates to 1.7–1.8 billion people who have used AI tools, with 500–600 million engaging daily.1 This is no longer experimentation; it’s habit formation at an unprecedented scale.\n\nBeneath the hype, real usage patterns are more nuanced than expected. They expose hidden gaps and huge opportunities for founders building the next generation of consumer AI products. In this report, based on a survey of over 5,000 U.S. adults,2 we unpack what’s fueling this adoption, where value is leaking, and how the smartest companies can capture it—revealing the driving forces behind the consumer AI revolution.\n\n### A $12 Billion Market Built in 2.5 Years\n\nThis rapid adoption drives real dollars: In the two and a half years since OpenAI’s ChatGPT introduced the public to generative AI, consumer AI has become a multibillion-dollar market.\n\nNearly two billion people use AI, but spending lags at $12 billion, highlighting a massive opportunity for specialized tools to unlock more value.\n\nWhen we do the math, 1.8 billion users at an average monthly subscription cost of $20 per month equals $432 billion a year; today’s $12 billion market indicates that only about 3% pay for premium services—a strikingly low conversion rate and one of the largest and fastest-emerging monetization gaps in recent consumer tech history.3 Even ChatGPT, with its first-mover advantage, only converts about 5% of its weekly active users into paying subscribers.4 This gap between usage and payment represents a major opportunity.\n\nFor context, Menlo Ventures’ 2024: State of Generative AI in the Enterprise report found that enterprise AI spend reached $13.8 billion in 2024—a more than 6x increase from the prior year. But we believe consumer AI will close the gap with broader reach and faster adoption, catching up to enterprise AI in both usage and total revenue generated.\n\nWith nearly two-thirds of Americans reporting they’ve used AI, we wanted to know, who are the drivers of adoption? The answer challenges conventional wisdom about digital natives and early adopters.\n\n### Who’s Using AI? The Stats May Surprise You\n\n##### AI Adoption Spans All Generations, With Some Unexpected Patterns\n\nWhile Gen Z (ages 18-28) leads overall AI adoption as expected, Millennials (ages 29-44) emerge as power users, reporting more daily usage—flipping the typical “younger = higher usage” pattern. But AI is not just a young person’s game: Nearly half (45%) of Baby Boomers (ages 61-79) have used AI in the past six months, with 11% using it daily.\n\nDaily AI users demonstrate deep engagement and habitual use. Overall, AI users (those who have used AI in the last six months) highlight both broad reach and high awareness. Millennials are most likely to use AI daily, but AI’s true reach shows in the fact that nearly half of Boomers use AI.\n\n##### Work and School Fuel Everyday Adoption\n\nIt’s hardly surprising AI adoption spikes among students and those who work. According to our survey:\n\n- Menlo Anthology Fund\n- 75% of employed adults use AI, compared to 52% of unemployed adults;\n- Higher income amplifies this: 74% of households earning $100,000+ annually use AI vs. 53% of households earning under $50,000, highlighting a familiar income-based digital divide;\n- 85% of students (18 and older) report using AI—the highest rate of any group we measured.\n\nAI usage skews highest among students, employed adults, and higher-income households.\n\n##### Parents: The Unexpected Power Users\n\nOne of the most surprising findings? Parents are among the most engaged AI users, turning to AI for everyday help.\n\nAmong parents with children under the age of 18:\n\n- The vast majority of parents (79%) have used AI compared to 54% of non-parents;\n- 29% report using AI every day, nearly twice the rate (1.9x) of non-parents (15%);\n- Top use cases: 34% for managing childcare, 28% for researching topics of interest, 26% taking and organizing notes;\n- Millennial parents rank highest: They make up 53% of parents with kids under 18 and are more likely to be working, earning higher incomes.\n\nAI adoption is atypical: Our research revealed that parents are nearly twice as likely as non-parents to use AI, with usage increasing as children grow, demonstrating that life complexity drives deeper adoption.\n\nI use AI all the time. We use it to make packing lists for my kids when we travel.”\n\n—44-year-old working mom with children in primary school\n\nI used it for planning a scavenger hunt on Easter.”\n\n—34-year-old stay-at-home mother of two\n\n###### The Complexity Curve: AI Use Increases as Children Grow\n\nInterestingly, AI usage among parents increases as their children get older, reflecting added family complexity and responsibilities:\n\n- Nearly half (45%) of parents with children over 13 use AI;\n- More than a third (36%) with children aged 5-13 use AI;\n- Nearly a third (29%) of parents with children under 5 use AI.\n\nWhen I’m feeling uninspired, I use AI for meal planning and ideas for packed lunch.”\n\n—38-year-old working mom of teen\n\nI use AI to help my daughter when she struggles with math concepts. It gives me tricks to help her remember rules and formulas, and sometimes we use it to create practice tests with answer keys based on the worksheets she brings home so that she can prepare for tests.”\n\n—51-year-old working mom of teen\n\nTakeaway: The adoption patterns we see among parents show that consumer AI adoption follows life-stage complexity more than just age or income. This points to an adoption curve shaped by high-friction “life moments” that savvy companies can target as wedges to build lasting habits.\n\n##### The Utilitarian Truth Behind the Numbers\n\nRoutine Tasks → Small Wins → Compounding Value. This pattern is consistent across our power users who turn to AI because it makes life easier. This validates Menlo Ventures’ “ utilitarian consumer” thesis: People adopt tools that help them do what they already need to do, but in a better, faster, cheaper way. The broad appeal of AI is striking: millions of people, across all demographics, applying it to nearly every aspect of daily life. Beneath this diversity is a remarkably consistent behavior pattern, making AI the most broadly utilitarian new technology we’ve seen in years.\n\n### The Default Tool Dynamic: Consumers Choose Convenience Over Specialization\n\nWhen we asked people which AI tools they use, one trend was unmistakable: Most stick with familiar general AI assistants for almost every task, despite countless specialized apps to choose from. Consumers typically test their preferred general AI tool first—no matter the task—and only look for alternatives when it comes up short. Driven by this “default behavior,” generalist platforms dominate: 91% of AI users reach for their favorite general AI tool for nearly every job. About a quarter of Americans report using ChatGPT (28%) or Google Gemini(23%) in the past six months, indicating that consumer adoption today is largely driven by embedded products with existing distribution.5\n\nFirst-mover advantage and built-in distribution are currently driving market share. The market is still in its early innings, with plenty of room for innovation. Interestingly, most AI consumers don’t distinguish between technologies; they lump voice assistants, LLMs, and algorithms into the same “AI” bucket. This drives broad usage, fueled more by habit and convenience than by concern for technology under the hood.\n\nWhile ChatGPT leads today in consumer usage, that position is not guaranteed. The consumer market for LLMs is still nascent and far from saturated, leaving ample room for product innovation to shift market share over time. Challengers are moving fast: Anthropic’s* Claude Opus 4 outperforms OpenAI’s GPT‑4.1 on many reasoning and factuality benchmarks, making it a preferred choice for enterprises, while Google’s Gemini 1.5 models boast massive context lengths of up to one million tokens, an area where ChatGPT’s consumer version still lags. Other players like Perplexity have gained traction by chipping into the AI search niche once synonymous with ChatGPT. And in specific consumer use cases like coding, Claude Code is becoming the runaway market leader compared to other LLM providers.For consumers, switching costs are practically zero; there’s no data migration, no sunken cost. Meanwhile, Big Tech incumbents are embedding LLMs directly into the everyday tools people already use: Google is weaving Gemini into Search and Gmail; and Amazon’s ecosystem, which includes the voice-driven virtual assistant Alexa, is receiving an intelligence upgrade through their partnership with Anthropic*. AI is being baked into keyboards, browsers, and operating systems. If your assistant is everywhere you type, why open a separate app?\n\nHowever, consumers aren’t reliant solely on general AI tools. Sixty percent of users report using both general AI assistants and specialized AI tools—a signal that more advanced workflows are emerging. Specialized tools only gain traction when they clearly outperform the default option.\n\nI use ChatGPT for everything. But I go to Gamma for slides.”\n\n—30-year-old designer\n\nI use Claude for 90% of things I need from AI.”\n\n—38-year-old engineer\n\nIt’s worth noting that our survey revealed that most people don’t distinguish between older assistants like Alexa and Apple’s Siri*, algorithmic recommendations like Netflix or TikTok, and newer large language models like ChatGPT and Claude*. Technically, these rely on very different technologies, but to consumers, they all feel like “AI.” For both Siri and Alexa, distribution and habit sustain usage regardless of technical sophistication.\n\nTakeaway: The reach of general AI assistants means consumers will almost always try their default tool first. Yet the consumer market for LLMs is still in its early days: far from saturated and very much up for grabs as new capabilities, better models, and deeper integrations reshape how and where people use AI in daily life. As gaps persist and the market matures, consumers will increasingly pick the best LLM based on fit for the task and personal needs.\n\n##### Market Concentration: $10 Billion Flows to General AI Leaders\n\nThis default-first behavior drives massive revenue concentration: General AI assistants capture 81% of today’s $12 billion consumer AI spend. OpenAI’s first-mover advantage made ChatGPT the dominant player in this early market, accounting for about 70% of total consumer spend and 86% of spending on general AI tools specifically.\n\nMost AI use is free, but of the dollars consumers do spend, the majority still goes to general AI assistants. Specialized tools are carving out their share by delivering better results for specific jobs.\n\nA harsh reality for challengers: Many specialized tools run on the same foundation models as the general AI assistants they compete with. This co-opetition creates real tension: Each new LLM release absorbs more intelligence and specialized features, making entire categories obsolete overnight. Competing head-on is like building in front of a moving bulldozer: Unless these tools move fast, build deep domain stickiness, and deliver something the default can’t replicate, they risk being crushed.\n\nTakeaway: For consumers, convenience beats capability—until it doesn’t. Most users stick with their default tool unless a new one is dramatically better, following the classic 10x rule. For specialized tools to win, they must break users’ habits with experiences so superior, efficient, or personalized that switching becomes inevitable. It’"
+                      }
+                    ]
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbH/9A12aiNVO9K1/fPkl5OqRu9pLlndb+JU17OyN+y+IK6IBe424o//FVlDj/A"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "1O1EPnFP",
+              "toolName": "request_review",
+              "input": {
+                "taskId": "task_1",
+                "summary": "Identified 3 high-potential AI niches: 1. Enterprise AI Agents & Copilots, 2. Vertical AI, and 3. AI-Native/Physical AI. Each niche includes documented market gaps and is supported by at least 2 recent industry sources.",
+                "evidence": "I researched high-potential AI niches using recent 2025/2026 industry reports from credible sources such as CB Insights, McKinsey, Menlo Ventures, and Technavio. \n\nFindings:\n1. Enterprise AI Agents & Copilots: Revenue projected to reach $13B by end of 2025. Market gaps exist in deep integration into legacy workflows and cross-departmental agent orchestration. Sources: CB Insights, McKinsey.\n2. Vertical AI (Industry-Specific AI): Market expected to reach $126.65B by 2029. Gap exists in domain-specific solutions for regulated sectors (BFSI, Healthcare) that require explainable models and deep domain knowledge. Sources: Technavio, Bain & Company.\n3. AI-Native Infrastructure/Physical AI: Emerging trend in manufacturing robotics and physical AI. Gap exists in specialized hardware/edge computing to handle real-time inference close to data sources. Sources: Menlo Ventures, CB Insights (YC batch trends).",
+                "rationale": "The research is complete and satisfies all acceptance criteria (3-5 niches identified, documented gaps, backed by 2+ credible reports per niche). I am submitting the results for review."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHa3zs1lNltFLI14CbeypLJ2uoLYBR2veY8Kbfp2K7ieggIqBlEwIro71Fs4SP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "1O1EPnFP",
+              "toolName": "request_review",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "accepted",
+                    "eventId": "event_17",
+                    "awaiting": "review_presentation_response",
+                    "note": "Acknowledged — your command was published to the event bus. This is NOT the result. The outcome will arrive later as a separate \"review_presentation_response\" event addressed to you, carrying correlationId \"event_17\". Do not invent or act on any id (taskId, agentId, …) until that event arrives — if you have nothing else to do, call wait_until_response."
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHa3zs1lNltFLI14CbeypLJ2uoLYBR2veY8Kbfp2K7ieggIqBlEwIro71Fs4SP"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "user",
+          "content": "[agent/task_delegation_request]\nYou have been assigned task task_2: \"Develop AI Tool Concepts for Identified Niches\".\n\nBased on the 3 identified AI niches and market gaps from task_1, develop specific, actionable AI tool concepts that solve clear pain points for consumers or businesses. For each concept, define the target audience, core features, and competitive advantage.\n\nAcceptance criteria:\n- Propose 1 actionable, specific AI tool concept for each of the 3 identified niches.\n- For each tool concept, detail the target audience, the pain point being solved, and how it differentiates from existing solutions.\n- Ensure the proposed concepts are logical, technically feasible, and market-relevant based on the previous research."
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "sVwPjJzD",
+              "toolName": "update_task_status",
+              "input": {
+                "taskId": "task_2",
+                "newTaskStatus": "in_progress",
+                "rationale": "Starting task_2: Developing AI tool concepts for the identified niches (Enterprise Agents, Vertical AI, and Physical/Infrastructure AI)."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHsUZGCUo3C6pJv3v0T7vqjFkQ/BXVTui9gKNxYRVOW7O6Yugf9VidIVxILkDp"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "sVwPjJzD",
+              "toolName": "update_task_status",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "transitioned": true,
+                    "reason": null
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHsUZGCUo3C6pJv3v0T7vqjFkQ/BXVTui9gKNxYRVOW7O6Yugf9VidIVxILkDp"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "tool-call",
+              "toolCallId": "76kELVop",
+              "toolName": "request_review",
+              "input": {
+                "taskId": "task_2",
+                "summary": "Developed 3 AI tool concepts: OrchestraAgent (Enterprise), ComplianceLens AI (Vertical/BFSI), and EdgeSmart Robotics Manager (Physical/Manufacturing). Detailed target audiences, pain points, and differentiation for each.",
+                "evidence": "Concept 1 (Enterprise AI Agents): 'OrchestraAgent' - A cross-departmental orchestration layer for enterprise tools (Jira, Salesforce, Slack) that executes multi-step workflows. Target: Mid-to-large enterprises. Solves the 'siloed tool' pain point. Differentiates via seamless legacy system integration without replacing existing SaaS.\n\nConcept 2 (Vertical AI): 'ComplianceLens AI' - An automated regulatory documentation and audit tool for Finance/BFSI. Target: Compliance departments in banks. Solves the pain point of time-consuming manual regulatory reporting and high risk of error. Differentiates via 'explainable AI' (XAI) outputs mandated by EU AI Act/regulators.\n\nConcept 3 (Physical AI/Infrastructure): 'EdgeSmart Robotics Manager' - A localized, low-latency AI management dashboard for industrial robotics. Target: Small/mid-sized manufacturing facilities. Solves the pain point of high costs and complexity in deploying AI for predictive maintenance. Differentiates via on-premises deployment to ensure data privacy and reduce reliance on cloud connectivity.",
+                "rationale": "Developed 3 specific AI tool concepts addressing the niches from task_1. Each concept includes target audience, pain point, and competitive advantage, ensuring technical feasibility and market relevance."
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHJc27WN1SSSx0k6p2uNVncQHWaGhZHSEfTL/n+IP5x1tV/tXYJTqBOnRBbkHb"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": [
+            {
+              "type": "tool-result",
+              "toolCallId": "76kELVop",
+              "toolName": "request_review",
+              "output": {
+                "type": "json",
+                "value": {
+                  "success": true,
+                  "result": {
+                    "status": "accepted",
+                    "eventId": "event_23",
+                    "awaiting": "review_presentation_response",
+                    "note": "Acknowledged — your command was published to the event bus. This is NOT the result. The outcome will arrive later as a separate \"review_presentation_response\" event addressed to you, carrying correlationId \"event_23\". Do not invent or act on any id (taskId, agentId, …) until that event arrives — if you have nothing else to do, call wait_until_response."
+                  }
+                }
+              },
+              "providerOptions": {
+                "google": {
+                  "thoughtSignature": "EjQKMgEMOdbHJc27WN1SSSx0k6p2uNVncQHWaGhZHSEfTL/n+IP5x1tV/tXYJTqBOnRBbkHb"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "updatedAt": 1782409819140
     }
   ]
 }

@@ -10,15 +10,21 @@ import { grep } from "./grep";
 
 import { DockerSandbox } from "../../../../sandbox";
 
+// Coding tools execute directly against the sandbox. Mark them `direct` so the
+// tool layer emits an observation event per call — the transparency the
+// non-coding trivial tools already get.
+const markDirect = <D>(d: D): D & { direct: true } =>
+  ({ ...d, direct: true }) as D & { direct: true };
+
 export const codingTools = (sandbox: DockerSandbox) =>
   [
-    bash(sandbox),
-    readFile(sandbox),
-    writeFile(sandbox),
-    editFile(sandbox),
-    multiEdit(sandbox),
-    insert(sandbox),
-    listDir(sandbox),
-    glob(sandbox),
-    grep(sandbox),
+    markDirect(bash(sandbox)),
+    markDirect(readFile(sandbox)),
+    markDirect(writeFile(sandbox)),
+    markDirect(editFile(sandbox)),
+    markDirect(multiEdit(sandbox)),
+    markDirect(insert(sandbox)),
+    markDirect(listDir(sandbox)),
+    markDirect(glob(sandbox)),
+    markDirect(grep(sandbox)),
   ] as const;

@@ -1,13 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-import {
-  type TaskId,
-  type TaskTransitionRequestEvent,
-  taskStatusSchema,
-} from "../../../../schema";
-import { TASK_SERVICE_ID } from "../../../task";
-import { publish, rationale, taskId, defineTool } from "../../ztypes";
+import { type TaskId, taskStatusSchema } from "../../../../schema";
+import { rationale, taskId, defineTool } from "../../ztypes";
 
 const inputSchema = z.object({
   taskId,
@@ -17,26 +12,32 @@ const inputSchema = z.object({
 
 type Input = z.infer<typeof inputSchema>;
 
+// TRIVIAL: a status transition is validated and applied in-process, returning
+// the real result immediately — no bus round-trip, no wait_until_response.
 export const updateTaskStatus = defineTool({
   name: "update_task_status",
+  direct: true,
   tool: tool({
     description: "Transition a task to a new status.",
     inputSchema,
   }),
 
-  handler: (ctx, args: Input) => {
-    const event: Omit<TaskTransitionRequestEvent, "id"> = {
-      source: ctx.agent.id,
-      target: TASK_SERVICE_ID,
-      topic: "task",
-      type: "task_transition_request",
-      body: {
-        taskId: args.taskId as TaskId,
-        to: args.newTaskStatus,
-        note: null,
-      },
-    };
+  handler: async (ctx, args: Input) => {
+    if (!ctx.org) {
+      return { success: false, error: "org operations unavailable" };
+    }
 
-    return publish(ctx.bus, event, "task_transition_response");
+    const result = await ctx.org.transitionTask(
+      ctx.agent.id,
+      args.taskId as TaskId,
+      args.newTaskStatus,
+      null,
+    );
+
+    if (result.transitioned) {
+      return { success: true, result };
+    }
+
+    return { success: false, error: result.reason ?? "transition failed" };
   },
 });

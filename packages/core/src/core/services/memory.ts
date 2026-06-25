@@ -98,6 +98,9 @@ export class MemoryService {
           default:
             return null; // response events, lifecycle events — no useful query
         }
+
+      case "observation":
+        return null; // fire-and-forget transparency events — nothing to recall
     }
   }
 

@@ -76,6 +76,8 @@ const PRIORITY_STYLES: Record<Task["priority"], string> = {
 const TOPIC_STYLES: Record<Event["topic"], string> = {
   agent: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
   task: "bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
+  observation:
+    "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
 };
 
 function Pill({

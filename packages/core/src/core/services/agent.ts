@@ -4,6 +4,7 @@ import { BaseAgent } from "../agents";
 
 import type {
   Agent,
+  AgentSpawn,
   AgentCreationRequestEvent,
   AgentCreationResponseEvent,
   AgentId,
@@ -20,7 +21,6 @@ import type {
   Role,
   ServiceId,
 } from "../schema";
-import { departmentSchema } from "../schema";
 
 import type { AgentRepository, TaskRepository } from "../../repositories";
 
@@ -41,15 +41,94 @@ export const AGENT_SERVICE_ID: ServiceId = "agent_service";
  * staff workers directly without a manager in between. The spawn policy below is
  * what keeps that flatness from quietly growing into a cathedral of managers.
  */
-const ROLE_RANK: Record<Role, number> = {
-  executive: 0,
-  head: 1,
-  manager: 2,
-  worker: 3,
+/**
+ * The org is a fixed ladder: each role spawns exactly the role one rung below
+ * it. The spawned role is therefore NOT a choice — it is determined by the
+ * creator's role, so the creator never inputs it. Workers are the leaves and
+ * spawn no one.
+ */
+const NEXT_ROLE: Record<Role, Role | null> = {
+  executive: "head",
+  head: "manager",
+  manager: "worker",
+  worker: null,
 };
 
-const canCreate = (creator: Role, target: Role): boolean =>
-  ROLE_RANK[target] > ROLE_RANK[creator];
+/**
+ * An agent's objective is STATIC — set by us from its role, never chosen per
+ * creation. Identity is fixed ("serve your parent, deliver the work given to
+ * you"); what varies is the WORK, which arrives as delegated direction and
+ * tasks — not by rewriting who the agent is. This is why the creator's proposed
+ * objective is ignored: a task-flavoured objective would make the agent drift
+ * with the task instead of staying a stable seat in the org.
+ */
+function staticObjective(role: Role, department: Department): string {
+  switch (role) {
+    case "executive":
+      return `Serve as the organization's executive: interface with the principal and deliver their objectives through the department heads you direct.`;
+    case "head":
+      return `Lead the ${department} department. Take the objectives your executive hands you and deliver them through the managers and work you organize. Your purpose is fixed — the specific goals arrive as direction from above and the work in flight, not from this statement.`;
+    case "manager":
+      return `Run your initiative in the ${department} department. Turn the requirements your head gives you into completed, verified work through your workers. Your purpose is fixed — the specific work arrives as direction and the tasks you create, not from this statement.`;
+    case "worker":
+      return `Execute the tasks assigned to you in the ${department} department to a high standard, following your manager's specification. Your purpose is fixed — the specific work arrives as the tasks you are assigned, not from this statement.`;
+  }
+}
+
+/**
+ * KPIs and responsibilities are STATIC per role too — generic across every
+ * department, derived from what the role IS, not from the task that spawned it.
+ * Like the objective, they are set by us so identity stays stable.
+ */
+const STATIC_KPIS: Record<Role, readonly string[]> = {
+  executive: [
+    "Principal objectives delivered",
+    "Organizational alignment",
+    "Delivery success rate",
+  ],
+  head: [
+    "Department objectives delivered",
+    "Initiative throughput",
+    "Quality of delivered outcomes",
+  ],
+  manager: [
+    "Initiative delivered to spec",
+    "Task throughput and quality",
+    "Rework rate kept low",
+  ],
+  worker: [
+    "Assigned tasks completed and passed review",
+    "First-pass approval rate",
+    "Timeliness",
+  ],
+};
+
+const STATIC_RESPONSIBILITIES: Record<Role, readonly string[]> = {
+  executive: [
+    "Interface with the principal",
+    "Translate principal intent into objectives",
+    "Delegate to and coordinate department heads",
+    "Ensure outcomes meet the principal's intent",
+  ],
+  head: [
+    "Turn the executive's objective into initiatives",
+    "Staff and direct managers",
+    "Review delivered outcomes against the objective",
+    "Escalate blockers upward",
+  ],
+  manager: [
+    "Own the specification for the initiative",
+    "Decompose the work into concrete tasks",
+    "Staff and direct workers",
+    "Mark tasks complete on the Auditor's pass and report progress",
+  ],
+  worker: [
+    "Execute assigned tasks to spec",
+    "Keep task status current",
+    "Submit completed work for review with real evidence",
+    "Escalate blockers you cannot resolve",
+  ],
+};
 
 /**
  * Spawn policy — the enforced half of "as flat as the task tolerates". Depth is
@@ -155,80 +234,86 @@ export class AgentService {
     }
   }
 
-  private async handleCreation(
-    event: AgentCreationRequestEvent,
-  ): Promise<void> {
-    const creatorId = event.source as AgentId;
-
+  /**
+   * Create-and-launch a subordinate DIRECTLY (validation + spawn policy + repo
+   * write + launch), returning the real result. Trivial tools call this
+   * in-process — and because the new agent is LAUNCHED (subscribed) before this
+   * returns, the creator can message it immediately with no race. The bus
+   * handler just wraps this in a response event.
+   */
+  async create(
+    creatorId: AgentId,
+    spec: AgentSpawn,
+  ): Promise<{
+    approved: boolean;
+    agentId: AgentId | null;
+    reason: string | null;
+  }> {
     let creator: Agent;
 
     try {
       creator = this.agentRepository.get(creatorId);
     } catch {
-      const response: EventRes<AgentCreationResponseEvent> = {
-        topic: "agent",
-        target: event.source,
-        type: "agent_creation_response",
-        body: {
-          approved: false,
-          agentId: null,
-          reason: `unknown creator ${creatorId}`,
-        },
+      return {
+        approved: false,
+        agentId: null,
+        reason: `unknown creator ${creatorId}`,
       };
-
-      this.publish(response, event.id);
-
-      return;
     }
 
-    const role = event.body.role;
+    // 1. Role is fixed by the ladder — the creator spawns exactly the role one
+    // rung below it, never a role it chooses. Workers are leaves.
+    const role = NEXT_ROLE[creator.role];
 
-    // 1. Capability: may this creator spawn this role at all?
-    if (!canCreate(creator.role, role)) {
-      return this.rejectCreation(
-        event,
-        `${creator.role} cannot create ${role}`,
-      );
+    if (!role) {
+      return {
+        approved: false,
+        agentId: null,
+        reason: `${creator.role} agents are leaves and do not spawn subordinates`,
+      };
     }
 
     // 2. Spawn policy: keep the org flat and bounded.
     if (this.agentRepository.list().length >= MAX_TOTAL_AGENTS) {
-      return this.rejectCreation(
-        event,
-        `organization has reached its size limit (${MAX_TOTAL_AGENTS} agents)`,
-      );
+      return {
+        approved: false,
+        agentId: null,
+        reason: `organization has reached its size limit (${MAX_TOTAL_AGENTS} agents)`,
+      };
     }
 
     if (creator.manages.length >= MAX_DIRECT_REPORTS) {
-      return this.rejectCreation(
-        event,
-        `${creatorId} already has ${MAX_DIRECT_REPORTS} direct reports; delegate through them rather than adding more`,
-      );
+      return {
+        approved: false,
+        agentId: null,
+        reason: `${creatorId} already has ${MAX_DIRECT_REPORTS} direct reports; delegate through them rather than adding more`,
+      };
     }
 
     if (this.depthOf(creator) + 1 > MAX_DEPTH) {
-      return this.rejectCreation(
-        event,
-        `max org depth (${MAX_DEPTH}) reached; this work must be delegated to an existing agent, not nested deeper`,
-      );
+      return {
+        approved: false,
+        agentId: null,
+        reason: `max org depth (${MAX_DEPTH}) reached; this work must be delegated to an existing agent, not nested deeper`,
+      };
     }
 
-    // 3. Department is an orthogonal axis, not a tree level. The executive picks
-    // which department a head/subordinate belongs to; everyone else inherits the
-    // creator's department.
+    // 3. Department: ONLY the executive spawns across departments, so only it
+    // chooses one (for the head it creates). Everyone below inherits the
+    // creator's department and does not — cannot — set it.
     let department: Department;
 
     if (creator.role === "executive") {
-      const requested = event.body.department;
-
-      if (!departmentSchema.options.includes(requested)) {
-        return this.rejectCreation(
-          event,
-          `unknown department "${requested}"`,
-        );
+      if (!spec.department) {
+        return {
+          approved: false,
+          agentId: null,
+          reason:
+            "the executive must specify the department for the new head",
+        };
       }
 
-      department = requested;
+      department = spec.department;
     } else {
       department = creator.department;
     }
@@ -236,9 +321,12 @@ export class AgentService {
     const created = await this.agentRepository.createAgent({
       role,
       department,
-      objective: event.body.objective,
-      kpis: event.body.kpis,
-      responsibilities: event.body.responsibilities,
+      // Identity is enforced by us from the role — objective, kpis, and
+      // responsibilities are static, not chosen per creation, so an agent never
+      // drifts with the task that spawned it. The work is driven by tasks.
+      objective: staticObjective(role, department),
+      kpis: [...STATIC_KPIS[role]],
+      responsibilities: [...STATIC_RESPONSIBILITIES[role]],
       reportsTo: creatorId,
       manages: [],
       tools: toolNamesFor(role, department),
@@ -251,18 +339,19 @@ export class AgentService {
 
     this.launch(created);
 
-    // The new agent is now live but idle — it blocks on its mailbox until its
-    // parent delegates work to it. Triggering it is the creator's job (assign a
-    // task, or hand over the objective with a message), not the service's.
+    return { approved: true, agentId: created.id, reason: null };
+  }
+
+  private async handleCreation(
+    event: AgentCreationRequestEvent,
+  ): Promise<void> {
+    const result = await this.create(event.source as AgentId, event.body);
+
     const response: EventRes<AgentCreationResponseEvent> = {
       topic: "agent",
       target: event.source,
       type: "agent_creation_response",
-      body: {
-        approved: true,
-        agentId: created.id,
-        reason: null,
-      },
+      body: result,
     };
 
     this.publish(response, event.id);
@@ -330,21 +419,6 @@ export class AgentService {
     };
 
     this.publish(response, event.id);
-  }
-
-  /** Reject an agent-creation request with a readable reason the creator can act on. */
-  private rejectCreation(
-    request: AgentCreationRequestEvent,
-    reason: string,
-  ): void {
-    const response: EventRes<AgentCreationResponseEvent> = {
-      topic: "agent",
-      target: request.source,
-      type: "agent_creation_response",
-      body: { approved: false, agentId: null, reason },
-    };
-
-    this.publish(response, request.id);
   }
 
   /** Distance from the executive root (executive = 0), by walking reportsTo. */
