@@ -34,7 +34,7 @@ const VALID_TRANSITIONS: Record<TaskStatus, readonly TaskStatus[]> = {
   cancelled: [],
 };
 
-export const TASK_SERVICE_ID: ServiceId = "service_tasks";
+export const TASK_SERVICE_ID: ServiceId = "tasks_service";
 
 export class TaskService {
   private running = false;

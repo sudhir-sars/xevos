@@ -28,7 +28,7 @@ export type Learning = z.infer<typeof learningSchema>;
 const WAREHOUSE_CONTEXT_ID = "warehouse-context";
 const WAREHOUSE_CONTEXT_LIMIT = 5;
 
-export const memoryServiceId: ServiceId = "service_memory";
+export const memoryServiceId: ServiceId = "memory_service";
 
 export class MemoryService {
   constructor(

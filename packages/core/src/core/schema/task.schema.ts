@@ -62,12 +62,15 @@ export type TaskBudget = z.infer<typeof taskBudgetSchema>;
 export const taskSchema = z.object({
   id: taskIdSchema,
   status: taskStatusSchema,
-  referceTask: z.array(taskIdSchema).nullable(),
+  // Tolerant of fabricated ids: an LLM often invents a placeholder like
+  // "task_initialization" before any real task exists. Rather than failing the
+  // whole create_task call, drop anything that isn't a valid task id.
+  referceTask: z.array(taskIdSchema).catch([]).nullable(),
   review: reviewSchema.nullable(),
   title: z.string(),
   description: z.string(),
   acceptanceCriteria: z.array(z.string()),
-  dependencies: z.array(taskIdSchema),
+  dependencies: z.array(taskIdSchema).catch([]),
   assignedTo: agentIdSchema.nullable(),
   priority: taskPrioritySchema,
   deadline: z.number().nullable(),

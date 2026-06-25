@@ -165,7 +165,7 @@ how the system encodes structure into identifiers.
 | `TaskId` | `` `task_${number}` `` | tasks |
 | `MemoryWarehouseId` | `` `memory_${number}` `` | archived learnings |
 | `EventId` | `` `event_${number}` `` | one per published event |
-| `ServiceId` | `` `service_${string}` `` | service mailboxes |
+| `ServiceId` | `` `${string}_service` `` | service mailboxes |
 | `EndpointId` | `AgentId \| ServiceId \| PrincipalId` | anything addressable on the bus |
 
 ### 4.2 Agent (`agent.schema.ts`)
@@ -395,7 +395,7 @@ handle(event):
 All services are long-lived loops subscribed to a `ServiceId` mailbox. They are
 wired together in `src/index.ts#main()` (the composition root).
 
-### 8.1 AgentService (`services/agent.ts`, `service_agent`)
+### 8.1 AgentService (`services/agent.ts`, `agent_service`)
 
 Owns the **agent lifecycle** and the live `BaseAgent` instances (`Map<AgentId,
 BaseAgent>`).
@@ -416,7 +416,7 @@ BaseAgent>`).
 - `SUBORDINATE_ROLE` encodes the **only legal staffing direction**: each role can
   create exactly the role one rung below.
 
-### 8.2 TaskService (`services/task.ts`, `service_tasks`)
+### 8.2 TaskService (`services/task.ts`, `tasks_service`)
 
 Owns the **task board** and its state machine.
 
@@ -442,7 +442,7 @@ in_review   → in_progress | completed | failed | cancelled
 completed | failed | cancelled → (terminal)
 ```
 
-### 8.3 MemoryService (`services/memory.ts`, `service_memory`)
+### 8.3 MemoryService (`services/memory.ts`, `memory_service`)
 
 The agent memory subsystem. Backed by three repos (`task`, `agentMemory`,
 `memoryWarehouse`). Uses **BM25** (`fast-bm25`) for retrieval — no vector DB yet.
@@ -463,7 +463,7 @@ The agent memory subsystem. Backed by three repos (`task`, `agentMemory`,
 - BM25 ranks over four boosted fields of each learning (`summary` ×2, `findings`
   ×1.5, `decisions`, `lessons`).
 
-### 8.4 PromptService (`services/prompt.ts`, `service_prompts`)
+### 8.4 PromptService (`services/prompt.ts`, `prompts_service`)
 
 Builds an agent's **system prompt** by composition:
 
@@ -485,7 +485,7 @@ Those defaults are where the real behavioral instructions live (e.g. the
 engineering-department prompt documents the sandbox tools and the
 append-only-git / iterate-until-green workflow).
 
-### 8.5 ToolService (`services/tool/service.ts`, `service_tool`)
+### 8.5 ToolService (`services/tool/service.ts`, `tool_service`)
 
 The facade over the tool layer (detailed in §9). Two methods:
 
@@ -577,7 +577,7 @@ sandbox, 22 with).
 | `request_information` | `agentId, query, rationale` | publish `information_request` → `agentId` |
 | `escalate_blocker` | `reason, blockedTaskId?, rationale` | publish `escalation_request` → `reportsTo` (error if none) |
 | `request_review` | `taskId?, summary, rationale` | publish `review_presentation_request` → `reportsTo` |
-| `create_subordinate_agent` | `agentCreateSchema` | publish `agent_creation_request` → `service_agent` |
+| `create_subordinate_agent` | `agentCreateSchema` | publish `agent_creation_request` → `agent_service` |
 | `search_memory` | `query, rationale` | `memory.recall(query)` → returns results (no event) |
 | `get_status` | `rationale` | returns `{ agent, agentStatus, tasks: listByAgent(...) }` (no event) |
 | `respond_to_principal` | `message, rationale` | `principalSink(agentId, message)` → reaches the human |
@@ -588,8 +588,8 @@ sandbox, 22 with).
 
 | tool | input | effect |
 |---|---|---|
-| `create_task` | `taskCreateSchema` | publish `task_create_request` → `service_tasks` (defaults `budget={maxTokens:50_000,maxUsd:1}`) |
-| `update_task_status` | `taskId, newTaskStatus, rationale` | publish `task_transition_request` → `service_tasks` (`note:null`) |
+| `create_task` | `taskCreateSchema` | publish `task_create_request` → `tasks_service` (defaults `budget={maxTokens:50_000,maxUsd:1}`) |
+| `update_task_status` | `taskId, newTaskStatus, rationale` | publish `task_transition_request` → `tasks_service` (`note:null`) |
 
 **Code tools** (`definitions/code/`) — only granted to a sandboxed (engineering
 worker) agent; each is a `(sandbox) => ToolDefinition` factory. All output is
@@ -801,18 +801,18 @@ extending the system.
 principal.send("Launch product X")
   → agent/message → executive mailbox
     → executive.reason() picks create_subordinate_agent(head, …)
-      → agent_creation_request → service_agent
+      → agent_creation_request → agent_service
         → AgentService mints head_product_1, grants tools, launches it
         → agent_creation_response → executive
     → executive delegates: assign_task / send_message → head
       → head decomposes → create_subordinate_agent(manager) → … → create_task
-        → task_create_request → service_tasks → TaskService mints task_1
+        → task_create_request → tasks_service → TaskService mints task_1
       → manager assign_task(task_1, worker) → task_delegation_request → worker
         → worker.prepareMessage expands the task brief
         → (engineering worker) prepareSandbox(): container + branch
         → worker iterates with bash/edit_file/… in its sandbox
         → worker update_task_status(in_review) + request_review → manager
-          → task_transition_request → service_tasks (state machine guards it)
+          → task_transition_request → tasks_service (state machine guards it)
       → manager reviews; on terminal status TaskService.archive →
         memory.closeTask: extractLearning (LLM) → warehouse archive +
         clear worker's working memory

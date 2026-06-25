@@ -1,4 +1,4 @@
-import { generateText, stepCountIs, ToolSet, type ModelMessage } from "ai";
+import { generateText, hasToolCall, ToolSet, type ModelMessage } from "ai";
 
 import type { Agent, AgentId, Event } from "../schema";
 import type { EventBus, Mailbox } from "../event-bus";
@@ -7,11 +7,8 @@ import type { PromptService } from "../services/prompt";
 import type { ToolService } from "../services/tool";
 import type { TaskRepository } from "../../repositories";
 import { DockerSandbox } from "../sandbox";
-import { getModel } from "../utils";
+import { withModel } from "../utils";
 import { ToolDefinition } from "../services/tool/definitions";
-
-/** How many act→observe steps a sandbox-backed worker may take per event. */
-const WORKER_MAX_STEPS = 30;
 
 /**
  * The one agent in the system.
@@ -21,11 +18,14 @@ const WORKER_MAX_STEPS = 30;
  * lets those tools' `execute` carry the effect (publish an org event, or drive
  * a sandbox).
  *
+ * Every agent runs the same open-ended act→observe loop: it must call a tool
+ * each step (tools are the only way to communicate) and keeps acting until it
+ * explicitly yields with wait_until_response or escalate_blocker.
+ *
  * The *only* thing that distinguishes an engineering worker is two facts wired
  * here behind a single `if`: it owns a Docker sandbox, and the tool service
- * therefore hands it filesystem/bash tools. With a sandbox it runs a multi-step
- * coding loop; without one it takes a single decisive turn per event. There is
- * no separate "engineering worker" class — it is all this.
+ * therefore hands it filesystem/bash tools. There is no separate "engineering
+ * worker" class — it is all this.
  */
 export class BaseAgent {
   private running = false;
@@ -111,16 +111,39 @@ export class BaseAgent {
 
   private async reason(messages: ModelMessage[]): Promise<ModelMessage[]> {
     try {
-      const result = await generateText({
-        model: getModel(this.config.department, this.config.role),
-        system: this.prompts.buildSystemPrompt(this.config),
-        messages,
-        tools: this.tools.getTools(this.config, this.sandbox),
-        toolChoice: "required",
-        // A sandbox-backed worker iterates (reason→act→observe) until done; every
-        // other agent takes one decisive action per event.
-        stopWhen: stepCountIs(this.sandbox ? WORKER_MAX_STEPS : 1),
-      });
+      // Pick a rate-limited key from the pool, run under the concurrency cap,
+      // and let the SDK retry transient failures (429 rate limits, 5xx) with
+      // exponential backoff instead of surfacing them to the agent loop.
+      const result = await withModel(
+        this.config.department,
+        this.config.role,
+        (model) =>
+          generateText({
+            model,
+            system: this.prompts.buildSystemPrompt(this.config),
+            messages,
+            maxRetries: 5,
+            tools: this.tools.getTools(this.config, this.sandbox),
+            // Tools are the ONLY channel an agent communicates through, so every
+            // step must call one — `toolChoice: "required"`, for every agent. The
+            // agent runs an open-ended act→observe loop: it acts, observes the tool
+            // result, acts again, for as many decisive actions as the event needs
+            // (e.g. delegate to all subordinates, or search → reason → report).
+            // There is no per-event step cap; the loop ends only when the agent
+            // explicitly YIELDS — it parks itself with wait_until_response (work
+            // submitted / nothing to do but wait) or hands the problem up with
+            // escalate_blocker. Without an explicit yield the agent would otherwise
+            // finish one action and block forever on an empty mailbox, deadlocking
+            // the org.
+            toolChoice: "required",
+            stopWhen: [
+              hasToolCall("wait_until_response"),
+              hasToolCall("escalate_blocker"),
+              hasToolCall("request_review"),
+              hasToolCall("respond_to_principal"),
+            ],
+          }),
+      );
       return result.response.messages;
     } catch (error) {
       console.error("generateText failed", error);

@@ -2,7 +2,7 @@ import type { ToolCallPart, ToolSet } from "ai";
 
 import { type EventBus } from "../../event-bus";
 import type { Agent, AgentId, ServiceId } from "../../schema";
-import type { TaskRepository } from "../../../repositories";
+import type { AgentRepository, TaskRepository } from "../../../repositories";
 import type { DockerSandbox } from "../../sandbox";
 import type { MemoryService } from "../memory";
 
@@ -10,7 +10,7 @@ import { ToolRegistry } from "./registry";
 import { ToolExecutor } from "./executor";
 import type { PrincipalSink, ToolContext, ToolResult } from "./ztypes";
 
-export const TOOL_SERVICE_ID: ServiceId = "service_tool";
+export const TOOL_SERVICE_ID: ServiceId = "tool_service";
 
 export class ToolService {
   private readonly registry = new ToolRegistry();
@@ -20,9 +20,10 @@ export class ToolService {
     private readonly bus: EventBus,
     private readonly memory: MemoryService,
     private readonly tasks: TaskRepository,
+    private readonly agents: AgentRepository,
     private readonly principalSink: PrincipalSink = defaultPrincipalSink,
   ) {
-    this.executor = new ToolExecutor(bus, memory, tasks, principalSink);
+    this.executor = new ToolExecutor(bus, memory, tasks, agents, principalSink);
   }
 
   /**
@@ -38,6 +39,7 @@ export class ToolService {
       bus: this.bus,
       memory: this.memory,
       tasks: this.tasks,
+      agents: this.agents,
       principalSink: this.principalSink,
     };
 

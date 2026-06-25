@@ -32,7 +32,7 @@ import type { ToolService } from "./tool";
 
 import { toolNamesFor } from "./tool";
 
-export const AGENT_SERVICE_ID: ServiceId = "service_agent";
+export const AGENT_SERVICE_ID: ServiceId = "agent_service";
 
 /**
  * Authority rank. Roles are CAPABILITIES, not mandatory layers: a creator may
@@ -251,6 +251,9 @@ export class AgentService {
 
     this.launch(created);
 
+    // The new agent is now live but idle — it blocks on its mailbox until its
+    // parent delegates work to it. Triggering it is the creator's job (assign a
+    // task, or hand over the objective with a message), not the service's.
     const response: EventRes<AgentCreationResponseEvent> = {
       topic: "agent",
       target: event.source,

@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import type { EventBus } from "../../event-bus";
 import type { Agent, AgentId, Event } from "../../schema";
-import type { TaskRepository } from "../../../repositories";
+import type { AgentRepository, TaskRepository } from "../../../repositories";
 import type { MemoryService } from "../memory";
 
 export type ToolResult =
@@ -23,6 +23,7 @@ export interface ToolContext {
   readonly bus: EventBus;
   readonly memory: MemoryService;
   readonly tasks: TaskRepository;
+  readonly agents: AgentRepository;
   readonly principalSink: PrincipalSink;
 }
 

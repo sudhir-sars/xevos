@@ -2,7 +2,7 @@ import type { ToolCallPart } from "ai";
 
 import type { EventBus } from "../../event-bus";
 import type { Agent } from "../../schema";
-import type { TaskRepository } from "../../../repositories";
+import type { AgentRepository, TaskRepository } from "../../../repositories";
 import type { DockerSandbox } from "../../sandbox";
 import type { MemoryService } from "../memory";
 
@@ -15,6 +15,7 @@ export class ToolExecutor {
     private readonly bus: EventBus,
     private readonly memory: MemoryService,
     private readonly tasks: TaskRepository,
+    private readonly agents: AgentRepository,
     private readonly principalSink: PrincipalSink,
   ) {}
 
@@ -38,6 +39,7 @@ export class ToolExecutor {
       bus: this.bus,
       memory: this.memory,
       tasks: this.tasks,
+      agents: this.agents,
       principalSink: this.principalSink,
     };
 

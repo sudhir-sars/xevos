@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { SendHorizonalIcon } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 import type { FeedItem } from "@/lib/use-xevos-stream";
 
@@ -78,37 +85,37 @@ export function Conversation({
   }
 
   return (
-    <section className="flex min-h-[28rem] flex-1 flex-col rounded-xl border border-black/[.08] bg-white dark:border-white/[.12] dark:bg-zinc-950">
-      <header className="flex items-center justify-between border-b border-black/[.06] px-4 py-3 dark:border-white/[.08]">
-        <h2 className="text-sm font-semibold tracking-tight">Executive</h2>
-        <span className="rounded-full bg-zinc-100 px-2 py-0.5 font-mono text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-          {messages.length}
-        </span>
-      </header>
-
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-auto p-4">
+    <Card className="flex h-full min-h-0 flex-col  overflow-hidden  p-3">
+      <div
+        ref={scrollRef}
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4"
+      >
         {messages.length === 0 ? (
-          <p className="py-6 text-center text-sm text-zinc-400 dark:text-zinc-600">
-            Send a message to the executive to get started.
-          </p>
+          <div className="flex flex-1 items-center justify-center">
+            <p className="text-center text-sm text-muted-foreground">
+              Send a message to the executive to get started.
+            </p>
+          </div>
         ) : (
           messages.map((message) => (
             <div
               key={message.key}
-              className={`flex flex-col ${
-                message.outgoing ? "items-end" : "items-start"
-              }`}
+              className={cn(
+                "flex flex-col",
+                message.outgoing ? "items-end" : "items-start",
+              )}
             >
               <div
-                className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
+                className={cn(
+                  "max-w-[85%] rounded-4xl px-3.5 py-2 text-sm whitespace-pre-wrap",
                   message.outgoing
-                    ? "bg-blue-600 text-white"
-                    : "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
-                }`}
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground",
+                )}
               >
                 {message.content}
               </div>
-              <span className="mt-1 px-1 font-mono text-[10px] text-zinc-400">
+              <span className="mt-1 px-1 font-mono text-[10px] text-muted-foreground">
                 {message.outgoing ? "you → executive" : message.from} ·{" "}
                 {formatTime(message.ts)}
               </span>
@@ -117,15 +124,10 @@ export function Conversation({
         )}
       </div>
 
-      <form
-        onSubmit={onSubmit}
-        className="flex flex-col gap-2 border-t border-black/[.06] p-3 dark:border-white/[.08]"
-      >
-        {error && (
-          <p className="px-1 text-xs text-red-600 dark:text-red-400">{error}</p>
-        )}
+      <form onSubmit={onSubmit} className="flex shrink-0 flex-col gap-2  p-3">
+        {error && <p className="px-1 text-xs text-destructive">{error}</p>}
         <div className="flex items-end gap-2">
-          <textarea
+          <Textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
@@ -135,18 +137,20 @@ export function Conversation({
               }
             }}
             rows={2}
-            placeholder="Message the executive…  (Enter to send, Shift+Enter for newline)"
-            className="flex-1 resize-none rounded-lg border border-black/[.12] bg-transparent px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-white/[.15]"
+            placeholder="Message the executive… "
+            className="max-h-32 min-h-[1.75rem] overflow-hidden flex-1 resize-none"
           />
-          <button
+          <Button
             type="submit"
+            size="icon-lg"
             disabled={draft.trim() === ""}
-            className="h-10 shrink-0 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Send message"
+            className={"hidden"}
           >
-            Send
-          </button>
+            <SendHorizonalIcon />
+          </Button>
         </div>
       </form>
-    </section>
+    </Card>
   );
 }

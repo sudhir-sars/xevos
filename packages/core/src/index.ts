@@ -4,6 +4,7 @@ import { EventBus } from "./core/event-bus";
 import { Principal } from "./core/principal";
 import {
   AgentService,
+  AuditService,
   MemoryService,
   PromptService,
   TaskService,
@@ -46,8 +47,12 @@ async function main(): Promise<void> {
   const promptSvc = new PromptService(promptRepo, agentRepo);
   const principalSvc = new Principal(busSvc, executive.id);
 
-  const tools = new ToolService(busSvc, memorySvc, taskRepo, (from, msg) =>
-    principalSvc.receive(from, msg),
+  const tools = new ToolService(
+    busSvc,
+    memorySvc,
+    taskRepo,
+    agentRepo,
+    (from, msg) => principalSvc.receive(from, msg),
   );
 
   const taskService = new TaskService(busSvc, taskRepo, agentRepo, memorySvc);
@@ -59,9 +64,11 @@ async function main(): Promise<void> {
     tools,
     promptSvc,
   );
+  const auditService = new AuditService(busSvc, taskRepo);
 
   taskService.start();
   agentService.start();
+  auditService.start();
 
   // Broadcast every EventBus event to the Principal UI over WebSocket, and
   // serve the initial store snapshot. Additive: does not touch mailbox delivery.

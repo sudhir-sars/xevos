@@ -1,8 +1,6 @@
 {
   "counters": {
-    "executive_organization": 2,
-    "head_engineering": 1,
-    "worker_engineering": 1
+    "executive_organization": 2
   },
   "agents": [
     {
@@ -28,15 +26,11 @@
         "Ensure adherence to organizational processes",
         "Ensure all delivered outcomes satisfy principal requirements"
       ],
-      "manages": [
-        "head_engineering_1"
-      ],
+      "manages": [],
       "status": "active",
       "reportsTo": "principal",
       "tools": [
         "respond_to_principal",
-        "create_task",
-        "assign_task",
         "create_subordinate_agent",
         "request_information",
         "escalate_blocker",
@@ -48,72 +42,7 @@
         "web_search"
       ],
       "id": "executive_organization_1",
-      "createdAt": 1782378348050
-    },
-    {
-      "role": "head",
-      "department": "engineering",
-      "objective": "Develop an AI-powered todo app MVP.",
-      "kpis": [
-        "MVP feature completeness",
-        "code quality",
-        "timely delivery"
-      ],
-      "responsibilities": [
-        "architecting the solution",
-        "implementing core features",
-        "ensuring AI integration functionality"
-      ],
-      "reportsTo": "executive_organization_1",
-      "manages": [
-        "worker_engineering_1"
-      ],
-      "tools": [
-        "create_task",
-        "assign_task",
-        "create_subordinate_agent",
-        "request_information",
-        "escalate_blocker",
-        "search_memory",
-        "send_message",
-        "update_task_status",
-        "wait_until_response",
-        "get_status",
-        "web_search"
-      ],
-      "status": "active",
-      "id": "head_engineering_1",
-      "createdAt": 1782378373955
-    },
-    {
-      "role": "worker",
-      "department": "engineering",
-      "objective": "Build the AI-powered todo app MVP including CRUD operations and AI integration.",
-      "kpis": [
-        "MVP feature completeness",
-        "code quality",
-        "timely delivery"
-      ],
-      "responsibilities": [
-        "Develop todo management backend/frontend",
-        "Integrate AI for prioritization and categorization"
-      ],
-      "reportsTo": "head_engineering_1",
-      "manages": [],
-      "tools": [
-        "request_review",
-        "request_information",
-        "escalate_blocker",
-        "search_memory",
-        "send_message",
-        "update_task_status",
-        "wait_until_response",
-        "get_status",
-        "web_search"
-      ],
-      "status": "active",
-      "id": "worker_engineering_1",
-      "createdAt": 1782378383140
+      "createdAt": 1782397411496
     }
   ]
 }
