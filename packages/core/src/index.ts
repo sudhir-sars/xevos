@@ -97,9 +97,7 @@ async function main(): Promise<void> {
     bus: busSvc,
     sources: {
       agents: agentRepo,
-      tasks: taskRepo,
       prompts: promptRepo,
-      memoryWarehouse: warehouseRepo,
     },
     port: observerPort(),
     onPrincipalMessage: (content) => principalSvc.send(content),

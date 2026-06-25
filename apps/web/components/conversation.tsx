@@ -3,48 +3,12 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { SendHorizonalIcon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import type { Message } from "@xevos/core/protocol";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-
-import type { FeedItem } from "@/lib/use-xevos-stream";
-
-interface Message {
-  key: string;
-  ts: number;
-  /** Display name of the sender. */
-  from: string;
-  /** True when sent by the principal (the UI), false when received. */
-  outgoing: boolean;
-  content: string;
-}
-
-/** Derive the principal <-> agents conversation from the live event feed. */
-function toMessages(feed: FeedItem[]): Message[] {
-  const messages: Message[] = [];
-
-  // feed is newest-first; iterate in reverse for chronological order.
-  for (let i = feed.length - 1; i >= 0; i--) {
-    const item = feed[i];
-    const event = item.event;
-
-    if (event.type !== "message") continue;
-    if (event.source !== "principal" && event.target !== "principal") continue;
-
-    const outgoing = event.source === "principal";
-    messages.push({
-      key: `${item.seq}-${event.id}`,
-      ts: item.ts,
-      from: outgoing ? "principal" : event.source,
-      outgoing,
-      content: event.body.content,
-    });
-  }
-
-  return messages;
-}
 
 function formatTime(ts: number): string {
   return new Date(ts).toLocaleTimeString([], {
@@ -54,22 +18,33 @@ function formatTime(ts: number): string {
 }
 
 export function Conversation({
-  feed,
+  messages,
+  hasMore,
+  loadMore,
   sendMessage,
 }: {
-  feed: FeedItem[];
+  /** Oldest-first conversation history. */
+  messages: Message[];
+  hasMore: boolean;
+  loadMore: () => void;
   sendMessage: (content: string) => boolean;
 }) {
-  const messages = toMessages(feed);
-
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastSeqRef = useRef<number | null>(null);
+
+  // Auto-scroll to the bottom only when a NEW message arrives (not when older
+  // history is prepended).
   useEffect(() => {
-    const el = scrollRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [messages.length]);
+    const latest = messages.length ? messages[messages.length - 1].seq : null;
+    if (latest !== lastSeqRef.current) {
+      lastSeqRef.current = latest;
+      const el = scrollRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    }
+  }, [messages]);
 
   function onSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -90,6 +65,16 @@ export function Conversation({
         ref={scrollRef}
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4"
       >
+        {hasMore && (
+          <button
+            type="button"
+            onClick={loadMore}
+            className="mx-auto rounded-full px-3 py-1 text-xs text-muted-foreground hover:bg-muted"
+          >
+            Load older messages
+          </button>
+        )}
+
         {messages.length === 0 ? (
           <div className="flex flex-1 items-center justify-center">
             <p className="text-center text-sm text-muted-foreground">
@@ -99,7 +84,7 @@ export function Conversation({
         ) : (
           messages.map((message) => (
             <div
-              key={message.key}
+              key={message.id}
               className={cn(
                 "flex flex-col",
                 message.outgoing ? "items-end" : "items-start",

@@ -9,26 +9,32 @@ import {
   parseClientFrame,
   PROTOCOL_VERSION,
   type EventFrame,
+  type Message,
+  type MessageDeltaFrame,
+  type OrgFrame,
   type ServerFrame,
-  type SnapshotFrame,
+  type TaskDeltaFrame,
 } from "./protocol";
-import { buildSnapshot, type SnapshotSources } from "./snapshot";
+import { buildOrgState, pageMessages, pageTasks, tasksChangedSince } from "./queries";
+import type { SnapshotSources } from "./snapshot";
+import { getSqlite } from "../db/client";
 
 const DEFAULT_PORT = 7077;
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PATH = "/ws";
+
+/** Coalesce bursts of bus events into one org+task refresh. */
+const FLUSH_DEBOUNCE_MS = 150;
+const DEFAULT_PAGE_LIMIT = 50;
+const MAX_PAGE_LIMIT = 200;
 
 export interface ObserverServerOptions {
   bus: EventBus;
   sources: SnapshotSources;
   port?: number;
   host?: string;
-  /** WebSocket upgrade path. HTTP routes are served on every other path. */
   path?: string;
-  /**
-   * Handles a message the UI sends to the principal (`POST /principal/message`).
-   * Returns the published event id. Omit to disable the write endpoint.
-   */
+  /** Publishes a principal->executive message; returns the event id. */
   onPrincipalMessage?: (content: string) => string;
 }
 
@@ -36,32 +42,43 @@ export interface ObserverServer {
   port: number;
   host: string;
   path: string;
-  /** Number of currently connected UI clients. */
   clientCount: number;
   close(): Promise<void>;
 }
 
-interface Client {
-  socket: WebSocket;
-  /** True once the snapshot has been sent and buffered events flushed. */
-  ready: boolean;
-  /** Events observed during the connect window, replayed after the snapshot. */
-  pending: Event[];
-  /** Per-connection frame counter. */
-  seq: number;
+function frame<T extends ServerFrame>(f: Omit<T, "v" | "ts">): T {
+  return { v: PROTOCOL_VERSION, ts: Date.now(), ...f } as T;
+}
+
+function isPrincipalMessage(event: Event): boolean {
+  return (
+    event.topic === "agent" &&
+    event.type === "message" &&
+    (event.source === "principal" || event.target === "principal")
+  );
+}
+
+function messageFromEvent(event: Event): Message {
+  const content = (event as { body?: { content?: unknown } }).body?.content;
+  return {
+    id: event.id,
+    seq: eventSeq(event.id),
+    ts: Date.now(),
+    from: event.source,
+    to: event.target,
+    outgoing: event.source === "principal",
+    content: typeof content === "string" ? content : "",
+  };
 }
 
 /**
- * Hosts an HTTP server that:
- *   - `GET /health`   -> liveness + counts
- *   - `GET /snapshot` -> the current store snapshot as JSON (SSR / debugging)
- *   - upgrades `path` -> a WebSocket that emits a snapshot frame on connect,
- *     then streams every subsequent EventBus event as an event frame.
- *
- * The EventBus tap is registered once and fans out to all clients. Per-client
- * buffering closes the gap between "snapshot captured" and "subscribed": events
- * published during a client's handshake are queued and replayed (deduped
- * against the snapshot boundary) so no event is lost or seen out of order.
+ * Hosts the HTTP+WS observer.
+ *   - `GET /health`            -> liveness + counts
+ *   - `GET /org`               -> full org state (snapshot)
+ *   - `GET /tasks?before&limit`    -> paginated task history (newest first)
+ *   - `GET /messages?before&limit` -> paginated message history (newest first)
+ *   - WebSocket `path`         -> `org` frame on connect, then `org`/`task`/
+ *     `message`/`event` deltas.
  */
 export async function startObserverServer(
   options: ObserverServerOptions,
@@ -71,109 +88,97 @@ export async function startObserverServer(
   const host = options.host ?? DEFAULT_HOST;
   const path = options.path ?? DEFAULT_PATH;
 
-  const clients = new Set<Client>();
+  const clients = new Set<WebSocket>();
 
-  const send = (client: Client, frame: ServerFrame): void => {
-    if (client.socket.readyState !== client.socket.OPEN) {
-      return;
+  // Only emit task deltas for tasks changed after the server started; the
+  // initial set is loaded by clients via GET /tasks.
+  let taskWatermark =
+    (
+      getSqlite()
+        .prepare("SELECT max(updated_at) AS m FROM tasks")
+        .get() as { m: number | null }
+    ).m ?? 0;
+
+  const broadcast = (f: ServerFrame): void => {
+    const payload = JSON.stringify(f);
+    for (const socket of clients) {
+      if (socket.readyState === socket.OPEN) socket.send(payload);
     }
-
-    client.socket.send(JSON.stringify(frame));
   };
 
-  const eventFrame = (client: Client, event: Event): EventFrame => ({
-    v: PROTOCOL_VERSION,
-    kind: "event",
-    seq: client.seq++,
-    ts: Date.now(),
-    event,
-  });
-
-  const snapshotFrame = (
-    client: Client,
-    data: SnapshotFrame["data"],
-  ): SnapshotFrame => ({
-    v: PROTOCOL_VERSION,
-    kind: "snapshot",
-    seq: client.seq++,
-    ts: Date.now(),
-    data,
-  });
-
-  // Single broadcast tap, fanned out to every client.
-  const disposeTap = bus.tap((event) => {
-    for (const client of clients) {
-      if (client.ready) {
-        send(client, eventFrame(client, event));
-      } else {
-        client.pending.push(event);
-      }
+  // Debounced org + task-delta flush.
+  let flushTimer: ReturnType<typeof setTimeout> | null = null;
+  const flush = (): void => {
+    broadcast(frame<OrgFrame>({ kind: "org", org: buildOrgState(sources) }));
+    for (const task of tasksChangedSince(taskWatermark)) {
+      broadcast(frame<TaskDeltaFrame>({ kind: "task", task }));
+      if (task.updatedAt > taskWatermark) taskWatermark = task.updatedAt;
     }
+  };
+  const scheduleFlush = (): void => {
+    if (flushTimer) return;
+    flushTimer = setTimeout(() => {
+      flushTimer = null;
+      try {
+        flush();
+      } catch (err) {
+        console.error("[observer] flush failed:", err);
+      }
+    }, FLUSH_DEBOUNCE_MS);
+  };
+
+  const disposeTap = bus.tap((event) => {
+    // Raw event for the live log.
+    broadcast(frame<EventFrame>({ kind: "event", seq: eventSeq(event.id), event }));
+
+    // Conversation messages stream immediately so chat feels live.
+    if (isPrincipalMessage(event)) {
+      broadcast(
+        frame<MessageDeltaFrame>({ kind: "message", message: messageFromEvent(event) }),
+      );
+    }
+
+    // Org/task state refresh, coalesced.
+    scheduleFlush();
   });
 
-  const httpServer = createServer((req: IncomingMessage, res: ServerResponse) => {
+  const httpServer = createServer((req, res) => {
     void handleHttp(req, res, { sources, clientCount: clients.size, port });
   });
 
   const wss = new WebSocketServer({ server: httpServer, path });
 
   wss.on("connection", (socket: WebSocket) => {
-    const client: Client = { socket, ready: false, pending: [], seq: 0 };
-    clients.add(client);
+    clients.add(socket);
+    socket.on("close", () => clients.delete(socket));
+    socket.on("error", () => clients.delete(socket));
 
-    socket.on("close", () => clients.delete(client));
-    socket.on("error", () => clients.delete(client));
-
-    // Inbound: messages the UI sends to the principal over the same socket.
     socket.on("message", (data) => {
-      const frame = parseClientFrame(data.toString());
-      if (!frame) return;
-
-      if (frame.kind === "principal_message") {
-        const content = frame.content.trim();
-        if (content === "" || !options.onPrincipalMessage) return;
-
-        try {
-          options.onPrincipalMessage(content);
-        } catch (err) {
-          console.error("[observer] onPrincipalMessage failed:", err);
-        }
+      const f = parseClientFrame(data.toString());
+      if (!f || f.kind !== "principal_message") return;
+      const content = f.content.trim();
+      if (content === "" || !options.onPrincipalMessage) return;
+      try {
+        options.onPrincipalMessage(content);
+      } catch (err) {
+        console.error("[observer] onPrincipalMessage failed:", err);
       }
     });
 
-    void (async () => {
-      try {
-        // Capture the boundary BEFORE building the snapshot: this can only
-        // over-count (causing a harmless dedup), never under-count (a gap).
-        const throughSeq = bus.publishedCount;
-        const snapshot = await buildSnapshot(sources, {
-          capturedAt: Date.now(),
-          throughSeq,
-        });
-
-        send(client, snapshotFrame(client, snapshot));
-
-        // Replay events observed during the handshake, skipping any already
-        // reflected in the snapshot.
-        for (const event of client.pending) {
-          if (eventSeq(event.id) > throughSeq) {
-            send(client, eventFrame(client, event));
-          }
-        }
-
-        client.pending = [];
-        client.ready = true;
-      } catch (err) {
-        console.error("[observer] failed to send snapshot:", err);
-        socket.close();
-        clients.delete(client);
-      }
-    })();
+    // Seed the client with current org state; tasks/messages load via HTTP.
+    try {
+      socket.send(
+        JSON.stringify(frame<OrgFrame>({ kind: "org", org: buildOrgState(sources) })),
+      );
+    } catch (err) {
+      console.error("[observer] failed to send org state:", err);
+      socket.close();
+      clients.delete(socket);
+    }
   });
 
   await new Promise<void>((resolve, reject) => {
     const onError = (err: Error): void => reject(err);
-
     httpServer.once("error", onError);
     httpServer.listen(port, host, () => {
       httpServer.removeListener("error", onError);
@@ -194,13 +199,9 @@ export async function startObserverServer(
     },
     async close(): Promise<void> {
       disposeTap();
-
-      for (const client of clients) {
-        client.socket.close();
-      }
-
+      if (flushTimer) clearTimeout(flushTimer);
+      for (const socket of clients) socket.close();
       clients.clear();
-
       await new Promise<void>((resolve) => wss.close(() => resolve()));
       await new Promise<void>((resolve) => httpServer.close(() => resolve()));
     },
@@ -213,37 +214,53 @@ interface HttpDeps {
   port: number;
 }
 
+function parseLimit(url: URL): number {
+  const raw = Number(url.searchParams.get("limit"));
+  if (!Number.isFinite(raw) || raw <= 0) return DEFAULT_PAGE_LIMIT;
+  return Math.min(Math.floor(raw), MAX_PAGE_LIMIT);
+}
+
+function parseBefore(url: URL): number | null {
+  const raw = url.searchParams.get("before");
+  if (raw === null || raw === "") return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
 async function handleHttp(
   req: IncomingMessage,
   res: ServerResponse,
   deps: HttpDeps,
 ): Promise<void> {
-  // Read-only diagnostics + initial snapshot. All two-way messaging goes over
-  // the WebSocket; these GETs are simple cross-origin requests (no preflight).
   res.setHeader("Access-Control-Allow-Origin", "*");
-
   const url = new URL(req.url ?? "/", `http://localhost:${deps.port}`);
 
-  if (req.method === "GET" && url.pathname === "/health") {
-    sendJson(res, 200, { ok: true, clients: deps.clientCount });
+  if (req.method !== "GET") {
+    sendJson(res, 405, { error: "method not allowed" });
     return;
   }
 
-  if (req.method === "GET" && url.pathname === "/snapshot") {
-    try {
-      const snapshot = await buildSnapshot(deps.sources, {
-        capturedAt: Date.now(),
-        throughSeq: 0,
-      });
-      sendJson(res, 200, snapshot);
-    } catch (err) {
-      console.error("[observer] /snapshot failed:", err);
-      sendJson(res, 500, { error: "failed to build snapshot" });
+  try {
+    switch (url.pathname) {
+      case "/health":
+        return sendJson(res, 200, { ok: true, clients: deps.clientCount });
+      case "/org":
+        return sendJson(res, 200, buildOrgState(deps.sources));
+      case "/tasks":
+        return sendJson(res, 200, pageTasks(parseBefore(url), parseLimit(url)));
+      case "/messages":
+        return sendJson(
+          res,
+          200,
+          pageMessages(parseBefore(url), parseLimit(url)),
+        );
+      default:
+        return sendJson(res, 404, { error: "not found" });
     }
-    return;
+  } catch (err) {
+    console.error(`[observer] ${url.pathname} failed:`, err);
+    sendJson(res, 500, { error: "internal error" });
   }
-
-  sendJson(res, 404, { error: "not found" });
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
