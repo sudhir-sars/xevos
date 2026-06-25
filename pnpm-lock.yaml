@@ -87,9 +87,6 @@ importers:
       '@ai-sdk/google':
         specifier: ^3.0.83
         version: 3.0.83(zod@4.4.3)
-      '@qdrant/js-client-rest':
-        specifier: ^1.18.0
-        version: 1.18.0(typescript@6.0.3)
       ai:
         specifier: ^6.0.208
         version: 6.0.208(zod@4.4.3)
@@ -829,16 +826,6 @@ packages:
   '@opentelemetry/api@1.9.1':
     resolution: {integrity: sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==}
     engines: {node: '>=8.0.0'}
-
-  '@qdrant/js-client-rest@1.18.0':
-    resolution: {integrity: sha512-/0dqX5uV9chC1DnYSnU4gNMrDqse/pt6hHg3Rqqpl5isH7xl1xSNvffjzBoxycDD79luWn7Ho6Rh/61sOs5DNw==}
-    engines: {node: '>=18.17.0', pnpm: '>=8'}
-    peerDependencies:
-      typescript: '>=4.7'
-
-  '@qdrant/openapi-typescript-fetch@1.2.6':
-    resolution: {integrity: sha512-oQG/FejNpItrxRHoyctYvT3rwGZOnK4jr3JdppO/c78ktDvkWiPXPHNsrDf33K9sZdRb6PR7gi4noIapu5q4HA==}
-    engines: {node: '>=18.0.0', pnpm: '>=8'}
 
   '@radix-ui/primitive@1.1.4':
     resolution: {integrity: sha512-7AdCK9PQyiljKoBDbN8OuctCbd/esdwZPQ8RtOE3SsyQtUpiPb+ND75q0jEhC1m1ecBI0MFNeLJvwIh9iKHRcQ==}
@@ -3392,10 +3379,6 @@ packages:
   undici-types@8.3.0:
     resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
 
-  undici@6.27.0:
-    resolution: {integrity: sha512-YmfV3YnEDzXRC5lZ2jWtWWHKGUm1zIt8AhesR1tens+HTNv+YZlN/dp6G727LOvMJ8xjP9Be7Y2Sdr96LDm+pg==}
-    engines: {node: '>=18.17'}
-
   undici@7.28.0:
     resolution: {integrity: sha512-cRZYrTDwWznlnRiPjggAGxZXanty6M8RV1ff8Wm4LWXBp7/IG8v5DnOm74DtUBp9OONpK75YlPnIjQqX0dBDtA==}
     engines: {node: '>=20.18.1'}
@@ -4183,14 +4166,6 @@ snapshots:
   '@nolyfill/is-core-module@1.0.39': {}
 
   '@opentelemetry/api@1.9.1': {}
-
-  '@qdrant/js-client-rest@1.18.0(typescript@6.0.3)':
-    dependencies:
-      '@qdrant/openapi-typescript-fetch': 1.2.6
-      typescript: 6.0.3
-      undici: 6.27.0
-
-  '@qdrant/openapi-typescript-fetch@1.2.6': {}
 
   '@radix-ui/primitive@1.1.4': {}
 
@@ -6916,8 +6891,6 @@ snapshots:
   undici-types@6.21.0: {}
 
   undici-types@8.3.0: {}
-
-  undici@6.27.0: {}
 
   undici@7.28.0: {}
 
