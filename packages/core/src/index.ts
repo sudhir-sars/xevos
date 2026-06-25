@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { EventBus } from "./core/event-bus";
+import { DrizzleEventStore, EventBus } from "./core/event-bus";
 import { Principal } from "./core/principal";
 import {
   AgentService,
@@ -42,7 +42,9 @@ async function main(): Promise<void> {
 
   const executive = agentRepo.getCEO();
 
-  const busSvc = new EventBus();
+  // Durable bus: every event hits the audit log, every targeted event the
+  // inbox queue, so in-flight work survives a restart.
+  const busSvc = new EventBus(new DrizzleEventStore());
   const memorySvc = new MemoryService(taskRepo, agentMemoryRepo, warehouseRepo);
   const promptSvc = new PromptService(promptRepo, agentRepo);
   const principalSvc = new Principal(busSvc, executive.id);
@@ -85,6 +87,9 @@ async function main(): Promise<void> {
   taskService.start();
   agentService.start();
   auditService.start();
+
+  // Subscribers are live; replay any work left unprocessed by a previous crash.
+  busSvc.recover();
 
   // Broadcast every EventBus event to the Principal UI over WebSocket, and
   // serve the initial store snapshot. Additive: does not touch mailbox delivery.
