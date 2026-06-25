@@ -1,6 +1,8 @@
 {
   "counters": {
-    "executive_organization": 2
+    "executive_organization": 2,
+    "head_product": 1,
+    "head_engineering": 1
   },
   "agents": [
     {
@@ -26,7 +28,10 @@
         "Ensure adherence to organizational processes",
         "Ensure all delivered outcomes satisfy principal requirements"
       ],
-      "manages": [],
+      "manages": [
+        "head_product_1",
+        "head_engineering_1"
+      ],
       "status": "active",
       "reportsTo": "principal",
       "tools": [
@@ -44,7 +49,77 @@
         "web_search"
       ],
       "id": "executive_organization_1",
-      "createdAt": 1782319273492
+      "createdAt": 1782370093635
+    },
+    {
+      "role": "head",
+      "department": "product",
+      "objective": "Lead the product department to define, design, and oversee the development of market-leading products that align with the principal's vision.",
+      "kpis": [
+        "Product strategy completion",
+        "Market requirement definition",
+        "Roadmap delivery accuracy"
+      ],
+      "responsibilities": [
+        "Define product vision and strategy",
+        "Conduct market research and competitor analysis",
+        "Develop and maintain the product roadmap",
+        "Translate business requirements into product specifications",
+        "Coordinate with engineering and design departments"
+      ],
+      "reportsTo": "executive_organization_1",
+      "manages": [],
+      "tools": [
+        "create_task",
+        "assign_task",
+        "create_subordinate_agent",
+        "request_information",
+        "escalate_blocker",
+        "search_memory",
+        "send_message",
+        "update_task_status",
+        "wait_until_response",
+        "get_status",
+        "web_search"
+      ],
+      "status": "active",
+      "id": "head_product_1",
+      "createdAt": 1782370099715
+    },
+    {
+      "role": "head",
+      "department": "engineering",
+      "objective": "Lead the engineering department to build, deploy, and maintain high-quality technical solutions that realize the product vision.",
+      "kpis": [
+        "System architecture stability",
+        "Development velocity",
+        "Code quality metrics"
+      ],
+      "responsibilities": [
+        "Define technical architecture and stack",
+        "Manage the software development lifecycle",
+        "Ensure system scalability and security",
+        "Oversee engineering team growth and performance",
+        "Collaborate with Product and Design on technical feasibility"
+      ],
+      "reportsTo": "executive_organization_1",
+      "manages": [],
+      "tools": [
+        "create_task",
+        "assign_task",
+        "create_subordinate_agent",
+        "request_information",
+        "escalate_blocker",
+        "search_memory",
+        "send_message",
+        "update_task_status",
+        "wait_until_response",
+        "get_status",
+        "web_search"
+      ],
+      "status": "active",
+      "id": "head_engineering_1",
+      "createdAt": 1782370103407
     }
   ]
 }

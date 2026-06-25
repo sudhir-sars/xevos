@@ -1,4 +1,4 @@
-import { generateText, stepCountIs, type ModelMessage } from "ai";
+import { generateText, stepCountIs, ToolSet, type ModelMessage } from "ai";
 
 import type { Agent, AgentId, Event } from "../schema";
 import type { EventBus, Mailbox } from "../event-bus";
@@ -8,6 +8,7 @@ import type { ToolService } from "../services/tool";
 import type { TaskRepository } from "../../repositories";
 import { DockerSandbox } from "../sandbox";
 import { getModel } from "../utils";
+import { ToolDefinition } from "../services/tool/definitions";
 
 /** How many act→observe steps a sandbox-backed worker may take per event. */
 const WORKER_MAX_STEPS = 30;
@@ -101,7 +102,6 @@ export class BaseAgent {
       ),
     );
     const responseMessages = await this.reason(messages);
-    console.log(responseMessages);
 
     await this.memory.recordTurn(this.config, [
       newMessage,
@@ -116,12 +116,11 @@ export class BaseAgent {
         system: this.prompts.buildSystemPrompt(this.config),
         messages,
         tools: this.tools.getTools(this.config, this.sandbox),
-        // Coordinators must act every turn (one decisive turn per event). A worker
-        // runs free until it finishes the task with a plain-text summary.
         toolChoice: "required",
-        // stopWhen: stepCountIs(isWorker ? WORKER_MAX_STEPS : 1),
+        // A sandbox-backed worker iterates (reason→act→observe) until done; every
+        // other agent takes one decisive action per event.
+        stopWhen: stepCountIs(this.sandbox ? WORKER_MAX_STEPS : 1),
       });
-      console.log("generateText returned");
       return result.response.messages;
     } catch (error) {
       console.error("generateText failed", error);

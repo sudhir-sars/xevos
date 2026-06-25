@@ -1,0 +1,55 @@
+{
+  "nextTaskId": 3,
+  "tasks": [
+    {
+      "id": "task_1",
+      "status": "backlog",
+      "review": null,
+      "assignedTo": null,
+      "createdAt": 1782370109058,
+      "updatedAt": 1782370109058,
+      "referceTask": null,
+      "title": "Define Initial Product Strategy and Roadmap",
+      "description": "Define the initial product strategy and high-level roadmap based on market needs and principal vision.",
+      "acceptanceCriteria": [
+        "Detailed product strategy document",
+        "High-level product roadmap for the next 6 months",
+        "Market analysis report"
+      ],
+      "dependencies": [],
+      "priority": "high",
+      "deadline": 1738368000,
+      "budget": {
+        "maxTokens": 50000,
+        "maxUsd": 1
+      }
+    },
+    {
+      "id": "task_2",
+      "status": "backlog",
+      "review": null,
+      "assignedTo": null,
+      "createdAt": 1782370113309,
+      "updatedAt": 1782370113309,
+      "referceTask": [
+        "task_1"
+      ],
+      "title": "Define Technical Architecture and Stack",
+      "description": "Define the technical architecture and core technology stack to support the initial product roadmap.",
+      "acceptanceCriteria": [
+        "Proposed technical stack selection",
+        "High-level system architecture diagram",
+        "Infrastructure strategy (cloud provider, CI/CD)"
+      ],
+      "dependencies": [
+        "task_1"
+      ],
+      "priority": "high",
+      "deadline": 1738368000,
+      "budget": {
+        "maxTokens": 50000,
+        "maxUsd": 1
+      }
+    }
+  ]
+}

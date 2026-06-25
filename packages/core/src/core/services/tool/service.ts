@@ -8,7 +8,7 @@ import type { MemoryService } from "../memory";
 
 import { ToolRegistry } from "./registry";
 import { ToolExecutor } from "./executor";
-import type { PrincipalSink, ToolResult } from "./ztypes";
+import type { PrincipalSink, ToolContext, ToolResult } from "./ztypes";
 
 export const TOOL_SERVICE_ID: ServiceId = "service_tool";
 
@@ -17,16 +17,40 @@ export class ToolService {
   private readonly executor: ToolExecutor;
 
   constructor(
-    bus: EventBus,
-    memory: MemoryService,
-    tasks: TaskRepository,
-    principalSink: PrincipalSink = defaultPrincipalSink,
+    private readonly bus: EventBus,
+    private readonly memory: MemoryService,
+    private readonly tasks: TaskRepository,
+    private readonly principalSink: PrincipalSink = defaultPrincipalSink,
   ) {
     this.executor = new ToolExecutor(bus, memory, tasks, principalSink);
   }
 
+  /**
+   * Build the agent's granted tools as ready-to-run ai-SDK tools: each tool's
+   * `execute` is its handler bound to *this* agent's context. generateText then
+   * runs the effect (publish a coordination event, drive the sandbox) inside its
+   * own loop — there is no separate dispatch/executor round-trip for the model's
+   * own tool calls.
+   */
   getTools(agent: Agent, sandbox?: DockerSandbox): ToolSet {
-    return this.registry.getTools(agent, sandbox);
+    const ctx: ToolContext = {
+      agent,
+      bus: this.bus,
+      memory: this.memory,
+      tasks: this.tasks,
+      principalSink: this.principalSink,
+    };
+
+    const tools: ToolSet = {};
+
+    for (const def of this.registry.resolve(agent, sandbox)) {
+      tools[def.name] = {
+        ...def.tool,
+        execute: (input: unknown) => def.handler(ctx, input as any),
+      } as ToolSet[string];
+    }
+
+    return tools;
   }
 
   execute(agent: Agent, toolCall: ToolCallPart): Promise<ToolResult> {
