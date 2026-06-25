@@ -40,9 +40,11 @@ export function getDb(): DB {
 
   // The memory-warehouse vector index is a sqlite-vec virtual table, not a
   // Drizzle table, so it is created here. Its rowid maps 1:1 to
-  // memory_warehouse.rowid.
+  // memory_warehouse.rowid. Cosine distance is magnitude-invariant, so we store
+  // raw (un-normalized) embeddings — keeping them portable to a cloud vector DB
+  // later without a lossy normalization baked in.
   conn.exec(
-    `CREATE VIRTUAL TABLE IF NOT EXISTS vec_memory USING vec0(embedding float[${EMBEDDING_DIMS}])`,
+    `CREATE VIRTUAL TABLE IF NOT EXISTS vec_memory USING vec0(embedding float[${EMBEDDING_DIMS}] distance_metric=cosine)`,
   );
 
   sqlite = conn;

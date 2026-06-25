@@ -7,8 +7,9 @@ const MODEL = google.textEmbedding("gemini-embedding-001");
 
 /**
  * Embed text for memory-warehouse recall. Pinned to EMBEDDING_DIMS (the width of
- * the sqlite-vec `vec_memory` table) and L2-normalized, so sqlite-vec's L2
- * distance ranks results the same way cosine similarity would.
+ * the sqlite-vec `vec_memory` table). Returns the RAW embedding: the vec_memory
+ * table uses cosine distance, which is magnitude-invariant, so no normalization
+ * is applied — keeping the stored vectors portable to a cloud vector DB later.
  */
 export async function embedText(text: string): Promise<number[]> {
   const { embedding } = await embed({
@@ -19,12 +20,5 @@ export async function embedText(text: string): Promise<number[]> {
     },
   });
 
-  return normalize(embedding);
-}
-
-function normalize(vec: number[]): number[] {
-  let sum = 0;
-  for (const x of vec) sum += x * x;
-  const norm = Math.sqrt(sum);
-  return norm > 0 ? vec.map((x) => x / norm) : vec;
+  return embedding;
 }
