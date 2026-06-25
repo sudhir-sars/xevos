@@ -153,7 +153,7 @@ export class MemoryService {
 
   async extractLearning(transcript: string): Promise<Learning> {
     const { output } = await generateText({
-      model: "google/gemini-3.5-flash",
+      model: "gemini-3.1-flash-lite",
       system: `
 You are an autonomous agent memory system.
 
