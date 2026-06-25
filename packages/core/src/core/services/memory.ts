@@ -1,6 +1,7 @@
 import { generateText, ModelMessage, Output, SystemModelMessage } from "ai";
-import { BM25 } from "fast-bm25";
 import { z } from "zod";
+
+import { embedText } from "./embedding";
 import type {
   Agent,
   Event,
@@ -38,10 +39,7 @@ export class MemoryService {
   ) {}
 
   async assembleContext(agent: Agent, event: Event): Promise<ModelMessage[]> {
-    const [memory, warehouseEntries] = await Promise.all([
-      this.agentMemoryRepository.get(agent.id),
-      this.warehouseRepository.list(),
-    ]);
+    const memory = await this.agentMemoryRepository.get(agent.id);
 
     const messages = [...(memory?.messages ?? [])];
 
@@ -56,15 +54,20 @@ export class MemoryService {
       const query = this.buildSearchQuery(event);
 
       if (query) {
-        const relevantMemories = this.search(warehouseEntries, query);
+        const relevantMemories = await this.vectorRecall(
+          query,
+          WAREHOUSE_CONTEXT_LIMIT,
+        );
 
-        const warehouseMessage: SystemModelMessage & { id: string } = {
-          id: WAREHOUSE_CONTEXT_ID,
-          role: "system",
-          content: `Warehouse Context:\n${JSON.stringify(relevantMemories, null, 2)}`,
-        };
+        if (relevantMemories.length > 0) {
+          const warehouseMessage: SystemModelMessage & { id: string } = {
+            id: WAREHOUSE_CONTEXT_ID,
+            role: "system",
+            content: `Warehouse Context:\n${JSON.stringify(relevantMemories, null, 2)}`,
+          };
 
-        messages.unshift(warehouseMessage);
+          messages.unshift(warehouseMessage);
+        }
       }
     }
 
@@ -112,8 +115,7 @@ export class MemoryService {
     query: string,
     limit = WAREHOUSE_CONTEXT_LIMIT,
   ): Promise<MemoryWarehouse[]> {
-    const entries = await this.warehouseRepository.list();
-    return this.search(entries, query, limit);
+    return this.vectorRecall(query, limit);
   }
 
   async closeTask(
@@ -138,17 +140,54 @@ export class MemoryService {
     );
 
     const learning = await this.extractLearning(transcript);
+    const embedding = await this.embedLearning(learning);
 
     await Promise.all([
       this.agentMemoryRepository.clear(agent.id),
-      this.warehouseRepository.archive({
-        taskId,
-        agentId: agent.id,
-        outcome: closedReason,
-        learning,
-        messages,
-      }),
+      this.warehouseRepository.archive(
+        {
+          taskId,
+          agentId: agent.id,
+          outcome: closedReason,
+          learning,
+          messages,
+        },
+        embedding,
+      ),
     ]);
+  }
+
+  /** Embed a learning for KNN recall; non-fatal — archive proceeds unindexed on failure. */
+  private async embedLearning(
+    learning: Learning,
+  ): Promise<number[] | undefined> {
+    const text = [
+      learning.summary,
+      ...learning.keyFindings,
+      ...learning.decisions,
+      ...learning.lessonsLearned,
+    ].join("\n");
+
+    try {
+      return await embedText(text);
+    } catch (error) {
+      console.error("[memory] failed to embed learning", error);
+      return undefined;
+    }
+  }
+
+  /** Embed the query and KNN-recall warehouse learnings; [] on any failure. */
+  private async vectorRecall(
+    query: string,
+    limit: number,
+  ): Promise<MemoryWarehouse[]> {
+    try {
+      const embedding = await embedText(query);
+      return await this.warehouseRepository.searchByVector(embedding, limit);
+    } catch (error) {
+      console.error("[memory] vector recall failed", error);
+      return [];
+    }
   }
 
   async extractLearning(transcript: string): Promise<Learning> {
@@ -172,34 +211,6 @@ Ignore conversational filler.
     });
 
     return output;
-  }
-
-  private search(
-    entries: MemoryWarehouse[],
-    query: string,
-    limit = WAREHOUSE_CONTEXT_LIMIT,
-  ): MemoryWarehouse[] {
-    if (entries.length === 0) return [];
-
-    const docs = entries.map((entry) => ({
-      summary: entry.learning.summary,
-      findings: entry.learning.keyFindings.join(" "),
-      decisions: entry.learning.decisions.join(" "),
-      lessons: entry.learning.lessonsLearned.join(" "),
-    }));
-
-    const bm25 = new BM25(docs, {
-      fieldBoosts: {
-        summary: 2,
-        findings: 1.5,
-        decisions: 1,
-        lessons: 1,
-      },
-    });
-
-    return bm25
-      .search(query, limit)
-      .map(({ index }: { index: number }) => entries[index]);
   }
 
   private buildTranscript(

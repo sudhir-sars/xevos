@@ -49,7 +49,7 @@ export interface PromptsSnapshot {
 }
 
 /**
- * Full state captured from the lowdb-backed stores at connect time. The web app
+ * Full state captured from the SQLite-backed stores at connect time. The web app
  * seeds its state from this, then folds in subsequent {@link EventFrame}s.
  */
 export interface Snapshot {

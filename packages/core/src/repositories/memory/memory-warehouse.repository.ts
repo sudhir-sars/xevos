@@ -1,6 +1,6 @@
 // repositories/memory-warehouse.repository.ts
 
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import type {
   AgentId,
@@ -9,7 +9,7 @@ import type {
   MemoryWarehouseId,
   TaskId,
 } from "../../core/schema";
-import { getDb, type DB } from "../../db/client";
+import { getDb, getSqlite, toVecBlob, type DB } from "../../db/client";
 import { counters, memoryWarehouse } from "../../db/schema";
 
 type MemoryWarehouseCreate = Omit<MemoryWarehouse, "id" | "createdAt">;
@@ -46,8 +46,17 @@ export class MemoryWarehouseRepository {
     return row ? toDomain(row) : null;
   }
 
-  async archive(entry: MemoryWarehouseCreate): Promise<MemoryWarehouse> {
-    return this.db.transaction((tx): MemoryWarehouse => {
+  /**
+   * Archive a learning. If an `embedding` is supplied it is written to the
+   * sqlite-vec `vec_memory` table keyed by this row's `rowid`, enabling KNN
+   * recall via {@link searchByVector}. Committed just after the row so a crash
+   * in between leaves the learning intact (merely unindexed).
+   */
+  async archive(
+    entry: MemoryWarehouseCreate,
+    embedding?: readonly number[],
+  ): Promise<MemoryWarehouse> {
+    const row = this.db.transaction((tx): WarehouseRow => {
       const counter = tx
         .select()
         .from(counters)
@@ -67,7 +76,7 @@ export class MemoryWarehouseRepository {
           .run();
       }
 
-      const row = tx
+      return tx
         .insert(memoryWarehouse)
         .values({
           memoryId: `memory_${nextId}` as MemoryWarehouseId,
@@ -80,9 +89,45 @@ export class MemoryWarehouseRepository {
         })
         .returning()
         .get();
-
-      return toDomain(row);
     });
+
+    if (embedding) {
+      getSqlite()
+        .prepare("INSERT INTO vec_memory(rowid, embedding) VALUES (?, ?)")
+        .run(BigInt(row.rowid), toVecBlob(embedding));
+    }
+
+    return toDomain(row);
+  }
+
+  /**
+   * K-nearest-neighbour recall over archived learnings, ordered by ascending
+   * distance. Replaces the old BM25 keyword search with semantic vector search.
+   */
+  async searchByVector(
+    embedding: readonly number[],
+    limit: number,
+  ): Promise<MemoryWarehouse[]> {
+    const knn = getSqlite()
+      .prepare(
+        "SELECT rowid, distance FROM vec_memory WHERE embedding MATCH ? ORDER BY distance LIMIT ?",
+      )
+      .all(toVecBlob(embedding), limit) as { rowid: bigint | number }[];
+
+    if (knn.length === 0) return [];
+
+    const orderedIds = knn.map((r) => Number(r.rowid));
+    const rows = this.db
+      .select()
+      .from(memoryWarehouse)
+      .where(inArray(memoryWarehouse.rowid, orderedIds))
+      .all();
+
+    const byRowid = new Map(rows.map((r) => [r.rowid, r]));
+    return orderedIds
+      .map((id) => byRowid.get(id))
+      .filter((r): r is WarehouseRow => r !== undefined)
+      .map(toDomain);
   }
 
   async list(): Promise<MemoryWarehouse[]> {

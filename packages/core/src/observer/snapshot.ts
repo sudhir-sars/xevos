@@ -7,7 +7,7 @@ import type {
 
 import { PROTOCOL_VERSION, type Snapshot } from "./protocol";
 
-/** The lowdb-backed stores the snapshot is assembled from. */
+/** The SQLite-backed stores the snapshot is assembled from. */
 export interface SnapshotSources {
   agents: AgentRepository;
   tasks: TaskRepository;
