@@ -183,6 +183,52 @@ export const rationale = z
   .string()
   .describe("Why you are taking this action. Recorded on the event for audit.");
 
+/**
+ * A single source backing a claim — one real result that was actually retrieved
+ * (e.g. via web_search), identified by its REAL title and URL. The point of a
+ * citation is provenance: it is copied, never paraphrased, so a reader (or the
+ * Auditor) can trace a claim back to the exact source it came from.
+ */
+export const citation = z.object({
+  title: z
+    .string()
+    .describe("The source's real title, exactly as it appeared in the result."),
+  url: z
+    .string()
+    .describe("The source's real URL. Copy it verbatim — never invent or edit it."),
+  publishedDate: z
+    .string()
+    .nullish()
+    .describe("The source's publish date if known; omit otherwise."),
+});
+
+export type Citation = z.infer<typeof citation>;
+
+/**
+ * The provenance trail attached to a report. Citations must flow UP the org
+ * UNCHANGED: when you relay or summarize work from below, copy every source
+ * here verbatim — never drop, reword, merge, or fabricate one. Summaries can be
+ * rewritten as they climb the hierarchy; the sources behind them cannot.
+ */
+export const citations = z
+  .array(citation)
+  .optional()
+  .describe(
+    "Real sources backing this report — each one actually retrieved below you. Carry them UP UNCHANGED: copy every title and URL verbatim; never drop, reword, or invent a source.",
+  );
+
+/** Render citations as a stable, verbatim block to append to a message body. */
+export function renderCitations(list: readonly Citation[] | undefined): string {
+  if (!list || list.length === 0) return "";
+
+  const lines = list.map((c) => {
+    const date = c.publishedDate ? ` (${c.publishedDate})` : "";
+    return `- ${c.title}${date}\n  ${c.url}`;
+  });
+
+  return `\n\nSources (carry these up unchanged):\n${lines.join("\n")}`;
+}
+
 export const agentId = z
   .string()
   .describe("target agent id, e.g. <role>_<department>_<number>");
