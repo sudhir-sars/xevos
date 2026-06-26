@@ -23,6 +23,10 @@ export class BrowserSession {
 
   constructor(private readonly opts: BrowserSessionOptions) {}
 
+  get account(): string {
+    return this.opts.account;
+  }
+
   private endpoint(): string {
     return this.opts.endpoint ?? OBSCURA_CDP_URL;
   }

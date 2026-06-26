@@ -21,6 +21,10 @@ export const X = {
 
   // Logged-out signals
   loginGate: '[data-testid="loginButton"], a[href="/login"], a[href="/i/flow/login"]',
+  // Positive logged-in signal (more reliable than gate-absence)
+  loggedInSignal:
+    '[data-testid="SideNav_AccountSwitcher_Button"], [data-testid="AppTabBar_Home_Link"], [data-testid="primaryColumn"]',
+  loginUrl: "https://x.com/i/flow/login",
 } as const;
 
 /** Extract the numeric status id from a /status/<id> permalink href. */

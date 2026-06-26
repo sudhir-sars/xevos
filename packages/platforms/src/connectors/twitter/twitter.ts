@@ -1,6 +1,8 @@
 import type { Page } from "puppeteer-core";
 
 import type { BrowserSession } from "../../browser/session";
+import { waitForLogin } from "../../browser/login";
+import type { SessionHealth } from "../../watch/health";
 import type {
   PlatformAction,
   PlatformConnector,
@@ -66,6 +68,38 @@ export class TwitterConnector implements PlatformConnector {
       throw new Error(
         "twitter session is logged out — capture a fresh session for this account",
       );
+    }
+  }
+
+  /**
+   * One-time interactive capture: opens the login flow and waits until you've
+   * logged in by hand (solving any CAPTCHA/2FA once); the session is then
+   * persisted and reused. Requires a visible browser (Obscura non-headless).
+   * For a hands-off bootstrap, prefer importCookies() from your own browser.
+   */
+  async captureLogin(timeoutMs?: number): Promise<void> {
+    await waitForLogin(this.session, {
+      loginUrl: X.loginUrl,
+      isLoggedIn: async (page) => (await page.$(X.loggedInSignal)) !== null,
+      timeoutMs,
+    });
+  }
+
+  /** Session health check — drives the auto-escalate-on-expiry watcher. */
+  async health(): Promise<SessionHealth> {
+    const base = {
+      platform: this.id,
+      account: this.session.account,
+      checkedAt: Date.now(),
+    };
+    try {
+      const loggedIn = await this.session.withPage(async (page) => {
+        await page.goto(`${X.base}/home`, { waitUntil: "domcontentloaded" });
+        return (await page.$(X.loggedInSignal)) !== null;
+      });
+      return { ...base, loggedIn };
+    } catch (error) {
+      return { ...base, loggedIn: false, error: String(error) };
     }
   }
 

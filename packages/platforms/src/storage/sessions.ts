@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import type { Cookie, CookieData } from "puppeteer-core";
+import type { CookieData } from "puppeteer-core";
 
 import { SESSIONS_DIR } from "../browser/config";
 
@@ -15,7 +15,7 @@ import { SESSIONS_DIR } from "../browser/config";
  */
 export interface SessionStore {
   load(account: string): Promise<CookieData[]>;
-  save(account: string, cookies: Cookie[]): Promise<void>;
+  save(account: string, cookies: readonly CookieData[]): Promise<void>;
 }
 
 /** Sanitize an account handle into a safe filename. */
@@ -39,7 +39,7 @@ export class FileSessionStore implements SessionStore {
     }
   }
 
-  async save(account: string, cookies: Cookie[]): Promise<void> {
+  async save(account: string, cookies: readonly CookieData[]): Promise<void> {
     await mkdir(this.dir, { recursive: true });
     await writeFile(this.path(account), JSON.stringify(cookies, null, 2), {
       mode: 0o600,

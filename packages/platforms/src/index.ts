@@ -5,6 +5,12 @@ export {
   DEFAULT_TIMEOUT_MS,
 } from "./browser/config";
 export { FileSessionStore, type SessionStore } from "./storage/sessions";
+export { importCookies, waitForLogin } from "./browser/login";
+export {
+  watchSessionHealth,
+  type SessionHealth,
+  type HealthWatchOptions,
+} from "./watch/health";
 
 export type {
   PlatformAction,
