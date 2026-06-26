@@ -15,6 +15,7 @@ import type {
 } from "../../schema";
 import type { AgentRepository, TaskRepository } from "../../../repositories";
 import type { MemoryService } from "../memory";
+import type { ConnectorRegistry } from "../connector-registry";
 
 export type ToolResult =
   | {
@@ -67,6 +68,8 @@ export interface ToolContext {
   readonly principalSink: PrincipalSink;
   /** Direct org operations for trivial tools. Absent on the onError path. */
   readonly org?: OrgOps;
+  /** Live platform connectors (Twitter, …) for the platform action tools. */
+  readonly connectors?: ConnectorRegistry;
 }
 
 /**

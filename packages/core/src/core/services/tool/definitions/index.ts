@@ -1,9 +1,14 @@
 import { DockerSandbox } from "../../../sandbox";
 import { agentDefinitions } from "./agent";
 import { taskDefinitions } from "./task";
+import { twitterTools } from "./platform/twitter";
 import { codingTools } from "./code";
 
-export const definitions = [...agentDefinitions, ...taskDefinitions] as const;
+export const definitions = [
+  ...agentDefinitions,
+  ...taskDefinitions,
+  ...twitterTools,
+] as const;
 
 export type ToolDefinition =
   | (typeof definitions)[number]

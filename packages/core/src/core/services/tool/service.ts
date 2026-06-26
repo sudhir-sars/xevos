@@ -8,6 +8,7 @@ import type { MemoryService } from "../memory";
 
 import { ToolRegistry } from "./registry";
 import { ToolExecutor } from "./executor";
+import type { ConnectorRegistry } from "../connector-registry";
 import {
   observe,
   type OrgOps,
@@ -35,6 +36,7 @@ export class ToolService {
     private readonly tasks: TaskRepository,
     private readonly agents: AgentRepository,
     private readonly principalSink: PrincipalSink = defaultPrincipalSink,
+    private readonly connectors?: ConnectorRegistry,
   ) {
     this.executor = new ToolExecutor(bus, memory, tasks, agents, principalSink);
   }
@@ -60,6 +62,7 @@ export class ToolService {
       agents: this.agents,
       principalSink: this.principalSink,
       org: this.org,
+      connectors: this.connectors,
     };
 
     const tools: ToolSet = {};

@@ -39,12 +39,24 @@ export const ROLE_TOOLS = {
   executive: ["respond_to_principal", ...STAFFING_TOOLS],
 } as const satisfies Record<Role, readonly ToolName[]>;
 
+// Twitter automation, granted by department. Marketing runs the full surface;
+// support gets just the customer-response actions.
+const TWITTER_TOOLS = [
+  "twitter_post",
+  "twitter_reply",
+  "twitter_dm",
+  "twitter_like",
+  "twitter_retweet",
+  "twitter_quote",
+  "twitter_follow",
+] as const satisfies readonly ToolName[];
+
 export const DEPARTMENT_WORKER_TOOLS = {
   organization: [],
   engineering: [],
   research: [],
-  marketing: [],
-  support: [],
+  marketing: [...TWITTER_TOOLS],
+  support: ["twitter_reply", "twitter_dm"],
   sales: [],
   legal: [],
 } as const satisfies Record<Department, readonly ToolName[]>;

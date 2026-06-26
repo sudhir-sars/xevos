@@ -11,6 +11,7 @@ import { Principal } from "./core/principal";
 import {
   AgentService,
   AuditService,
+  ConnectorRegistry,
   ConnectorService,
   MemoryService,
   PromptService,
@@ -56,12 +57,14 @@ async function main(): Promise<void> {
   const promptSvc = new PromptService(promptRepo, agentRepo);
   const principalSvc = new Principal(busSvc, executive.id);
 
+  const connectors = new ConnectorRegistry();
   const tools = new ToolService(
     busSvc,
     memorySvc,
     taskRepo,
     agentRepo,
     (from, msg) => principalSvc.receive(from, msg),
+    connectors,
   );
 
   const taskService = new TaskService(busSvc, taskRepo, agentRepo, memorySvc);
@@ -98,10 +101,11 @@ async function main(): Promise<void> {
   // Subscribers are live; replay any work left unprocessed by a previous crash.
   busSvc.recover();
 
-  // Platform connectors (Obscura-backed Twitter/etc.): poll for activity and
-  // push it onto the bus as synthetic-webhook events. Off unless an account is
-  // configured; needs a running Obscura engine + a captured session.
-  startConnectors(busSvc);
+  // Platform connectors (Obscura-backed Twitter/etc.): register them so the
+  // platform action tools can reach them, and poll for activity to push onto
+  // the bus as synthetic-webhook events. Off unless an account is configured;
+  // needs a running Obscura engine + a captured session.
+  startConnectors(busSvc, connectors);
 
   // Broadcast every EventBus event to the Principal UI over WebSocket, and
   // serve the initial store snapshot. Additive: does not touch mailbox delivery.
@@ -121,14 +125,16 @@ async function main(): Promise<void> {
  * org runs fine without any platform automation; when set, it needs a running
  * Obscura engine (OBSCURA_CDP_URL) and a captured session for the account.
  */
-function startConnectors(bus: EventBus): void {
+function startConnectors(bus: EventBus, registry: ConnectorRegistry): void {
   const account = process.env.XEVOS_TWITTER_ACCOUNT;
   if (!account) return;
 
   const twitter = new TwitterConnector(
     new BrowserSession({ account, store: new FileSessionStore() }),
   );
-  new ConnectorService({ bus, connectors: [twitter] }).start();
+  registry.register(twitter); // so the platform tools can reach it
+
+  new ConnectorService({ bus, connectors: registry.list() }).start();
   console.log(`[connectors] started — twitter:${account}`);
 }
 
