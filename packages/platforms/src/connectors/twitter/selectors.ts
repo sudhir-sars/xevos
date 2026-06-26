@@ -15,6 +15,13 @@ export const X = {
   tweetButton: '[data-testid="tweetButton"]',
   replyButton: '[data-testid="reply"]',
 
+  // Engagement
+  likeButton: '[data-testid="like"]',
+  unlikeButton: '[data-testid="unlike"]',
+  retweetButton: '[data-testid="retweet"]',
+  retweetConfirm: '[data-testid="retweetConfirm"]',
+  followButton: '[data-testid$="-follow"]',
+
   // A rendered tweet and the link that carries its status id
   tweetArticle: 'article[data-testid="tweet"]',
   statusLink: 'a[href*="/status/"]',

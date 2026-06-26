@@ -28,5 +28,8 @@ export {
   type Mention,
   type DMInput,
   type DMThread,
+  type TargetInput,
+  type QuoteInput,
+  type FollowInput,
 } from "./connectors/twitter/twitter";
 export { X as twitterSelectors } from "./connectors/twitter/selectors";

@@ -37,6 +37,19 @@ export interface DMInput {
   text: string;
 }
 
+export interface TargetInput {
+  /** Full tweet URL or status id. */
+  target: string;
+}
+export interface QuoteInput {
+  target: string;
+  text: string;
+}
+export interface FollowInput {
+  /** Handle to follow (without @). */
+  handle: string;
+}
+
 export interface DMThread {
   id: string;
   preview: string;
@@ -260,6 +273,71 @@ export class TwitterConnector implements PlatformConnector {
     });
   }
 
+  /** Like a tweet. No-op if already liked. */
+  async like(input: TargetInput): Promise<{ liked: boolean }> {
+    return this.session.withPage(async (page) => {
+      await page.goto(statusUrl(input.target), { waitUntil: "domcontentloaded" });
+      await this.assertLoggedIn(page);
+      const btn = await page.waitForSelector(X.likeButton, { timeout: 10_000 })
+        .catch(() => null);
+      if (!btn) return { liked: true }; // already liked (unlike button shown)
+      await btn.click();
+      return { liked: true };
+    });
+  }
+
+  /** Repost (retweet) a tweet. */
+  async retweet(input: TargetInput): Promise<{ retweeted: boolean }> {
+    return this.session.withPage(async (page) => {
+      await page.goto(statusUrl(input.target), { waitUntil: "domcontentloaded" });
+      await this.assertLoggedIn(page);
+      await page.waitForSelector(X.retweetButton);
+      await page.click(X.retweetButton);
+      await page.waitForSelector(X.retweetConfirm, { timeout: 10_000 });
+      await page.click(X.retweetConfirm);
+      return { retweeted: true };
+    });
+  }
+
+  /** Quote-tweet: repost with a comment. */
+  async quote(input: QuoteInput): Promise<PostResult> {
+    return this.session.withPage(async (page) => {
+      await page.goto(statusUrl(input.target), { waitUntil: "domcontentloaded" });
+      await this.assertLoggedIn(page);
+      await page.waitForSelector(X.retweetButton);
+      await page.click(X.retweetButton);
+
+      // The retweet menu offers "Quote"; pick it by text (no stable testid).
+      await page.evaluate(() => {
+        const items = Array.from(
+          document.querySelectorAll('[role="menuitem"], a[role="link"]'),
+        );
+        const quote = items.find((el) => /quote/i.test(el.textContent ?? ""));
+        (quote as HTMLElement | undefined)?.click();
+      });
+
+      await page.waitForSelector(X.tweetEditor);
+      await page.type(X.tweetEditor, input.text, { delay: 25 });
+      await page.waitForSelector(`${X.tweetButton}:not([aria-disabled="true"])`);
+      await page.click(X.tweetButton);
+      return { posted: true, url: statusUrl(input.target) };
+    });
+  }
+
+  /** Follow a handle. No-op if already following. */
+  async follow(input: FollowInput): Promise<{ followed: boolean }> {
+    const handle = input.handle.replace(/^@/, "");
+    return this.session.withPage(async (page) => {
+      await page.goto(`${X.base}/${handle}`, { waitUntil: "domcontentloaded" });
+      await this.assertLoggedIn(page);
+      const btn = await page.waitForSelector(X.followButton, { timeout: 10_000 })
+        .catch(() => null);
+      if (!btn) return { followed: true }; // already following (button hidden)
+      await btn.click();
+      return { followed: true };
+    });
+  }
+
   // ---- PlatformConnector surface (for the host to wrap into tools/watchers) ----
 
   get actions(): readonly PlatformAction[] {
@@ -278,6 +356,26 @@ export class TwitterConnector implements PlatformConnector {
         name: "twitter_dm",
         description: "Send a direct message to a handle.",
         run: (input) => this.sendDM(input as DMInput),
+      },
+      {
+        name: "twitter_like",
+        description: "Like a tweet (by URL or status id).",
+        run: (input) => this.like(input as TargetInput),
+      },
+      {
+        name: "twitter_retweet",
+        description: "Repost (retweet) a tweet.",
+        run: (input) => this.retweet(input as TargetInput),
+      },
+      {
+        name: "twitter_quote",
+        description: "Quote-tweet: repost with a comment.",
+        run: (input) => this.quote(input as QuoteInput),
+      },
+      {
+        name: "twitter_follow",
+        description: "Follow a handle.",
+        run: (input) => this.follow(input as FollowInput),
       },
     ];
   }
