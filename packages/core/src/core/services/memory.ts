@@ -104,6 +104,9 @@ export class MemoryService {
 
       case "observation":
         return null; // fire-and-forget transparency events — nothing to recall
+
+      case "platform":
+        return null; // inbound platform activity is routed, not memory-recalled
     }
   }
 

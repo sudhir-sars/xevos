@@ -153,3 +153,12 @@ export const counters = sqliteTable("counters", {
   key: text("key").primaryKey(),
   value: integer("value").notNull(),
 });
+
+// ---- Platform watcher cursors: the "seen so far" marker per synthetic webhook,
+//      so each poll only surfaces genuinely new activity (and survives restarts).
+export const platformCursors = sqliteTable("platform_cursors", {
+  // `${platform}:${account}:${watcher}`
+  key: text("key").primaryKey(),
+  cursor: text("cursor"),
+  updatedAt: integer("updated_at").notNull(),
+});

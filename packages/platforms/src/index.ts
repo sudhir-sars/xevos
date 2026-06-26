@@ -13,6 +13,7 @@ export {
 } from "./watch/health";
 
 export type {
+  InboundKind,
   PlatformAction,
   PlatformConnector,
   PlatformWatcher,
@@ -25,5 +26,7 @@ export {
   type ReplyInput,
   type PostResult,
   type Mention,
+  type DMInput,
+  type DMThread,
 } from "./connectors/twitter/twitter";
 export { X as twitterSelectors } from "./connectors/twitter/selectors";

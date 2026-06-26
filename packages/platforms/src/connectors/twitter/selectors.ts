@@ -25,6 +25,12 @@ export const X = {
   loggedInSignal:
     '[data-testid="SideNav_AccountSwitcher_Button"], [data-testid="AppTabBar_Home_Link"], [data-testid="primaryColumn"]',
   loginUrl: "https://x.com/i/flow/login",
+
+  // Direct messages
+  dmComposeUrl: "https://x.com/messages/compose",
+  conversation: '[data-testid="conversation"]',
+  dmEditor: '[data-testid="dmComposerTextInput"]',
+  dmSendButton: '[data-testid="dmComposerSendButton"]',
 } as const;
 
 /** Extract the numeric status id from a /status/<id> permalink href. */

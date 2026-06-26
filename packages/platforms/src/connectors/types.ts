@@ -1,3 +1,8 @@
+import type { SessionHealth } from "../watch/health";
+
+/** The kind of inbound activity a watcher surfaces (mirrors core's union). */
+export type InboundKind = "mention" | "reply" | "comment" | "dm" | "follower";
+
 /**
  * A typed platform action an agent can invoke (e.g. post a tweet, send a DM).
  * Effectful and outward-facing — the host should gate/rate-limit these.
@@ -24,12 +29,18 @@ export interface WatchResult<Item> {
 export interface PlatformWatcher<Item = unknown> {
   readonly name: string;
   readonly description: string;
+  /** What this watcher's items are, so the host can tag the emitted event. */
+  readonly kind: InboundKind;
   poll(cursor: string | null): Promise<WatchResult<Item>>;
 }
 
 /** A platform wrapper: its effectful actions and its synthetic-webhook watchers. */
 export interface PlatformConnector {
   readonly id: string;
+  /** The connected account handle (scopes cursors and session). */
+  readonly account: string;
   readonly actions: readonly PlatformAction[];
   readonly watchers: readonly PlatformWatcher[];
+  /** Session liveness probe — drives the auto-escalate-on-expiry watcher. */
+  health(): Promise<SessionHealth>;
 }

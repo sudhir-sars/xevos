@@ -87,6 +87,9 @@ importers:
       '@ai-sdk/google':
         specifier: ^3.0.83
         version: 3.0.83(zod@4.4.3)
+      '@xevos/platforms':
+        specifier: workspace:*
+        version: link:../platforms
       ai:
         specifier: ^6.0.208
         version: 6.0.208(zod@4.4.3)
