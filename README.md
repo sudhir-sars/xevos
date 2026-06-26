@@ -63,7 +63,7 @@ It is built on two hard assumptions:
 │                     queue · direct vs bus tools · escalation   │
 ├────────────────────────────────────────────────────────────────┤
 │  AGENT RUNTIME      the perceive→reason→act→observe loop,      │  ← implemented
-│                     one BaseAgent per seat                      │
+│                     one BaseAgent per seat                     │
 ├────────────────────────────────────────────────────────────────┤
 │  SUBSTRATE          SQLite + Drizzle + sqlite-vec · tool       │  ← implemented
 │                     registry · Docker sandboxes · model pool   │
@@ -121,12 +121,12 @@ The org is a fixed ladder — each role spawns exactly the role one rung below i
 and identity is **static**: an agent's objective, KPIs, and responsibilities come
 from its role, not from the task that spawned it, so it never drifts.
 
-| Role            | Owns                                                 | Spawns      |
-| --------------- | ---------------------------------------------------- | ----------- |
-| **Executive**   | The principal relationship; turning intent into objectives | Heads  |
-| **Head**        | One department's slice; the *what*, not the *how*    | Managers    |
-| **Manager**     | One initiative end-to-end; the spec and decomposition | Workers    |
-| **Worker**      | The actual work, using tools; submits for review     | (leaf)      |
+| Role            | Owns                                                       | Spawns      |
+| --------------- | ---------------------------------------------------------- | ----------- |
+| **Executive**   | The principal relationship; turning intent into objectives | Heads       |
+| **Head**        | One department's slice; the *what*, not the *how*          | Managers    |
+| **Manager**     | One initiative end-to-end; the spec and decomposition      | Workers     |
+| **Worker**      | The actual work, using tools; submits for review           | (leaf)      |
 
 Spawn policy keeps the tree flat and bounded (max depth, per-agent fan-out, and a
 global agent ceiling). Departments — `organization`, `engineering`, `research`,
@@ -242,9 +242,9 @@ pnpm web:dev        # just the dashboard (http://localhost:3000)
 The runtime reads configuration from the environment (a local `.env` is loaded
 automatically):
 
-| Variable                          | Purpose                                                                 |
-| --------------------------------- | ----------------------------------------------------------------------- |
-| `GOOGLE_GENERATIVE_AI_API_KEY`    | Single Google Gemini key (the default if no pool is set).               |
+| Variable                          | Purpose                                                                                      |
+| --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `GOOGLE_GENERATIVE_AI_API_KEY`    | Single Google Gemini key (the default if no pool is set).                                    |
 | `GOOGLE_API_KEYS`                 | Comma-separated pool of keys (each a separate quota bucket) for higher aggregate throughput. |
 | `GEMINI_RPM_PER_KEY`              | Per-key requests/minute cap for the rate limiter (default `15`).        |
 | `MODEL_MAX_CONCURRENCY`           | Max in-flight model calls at once (defaults to the key count).          |
