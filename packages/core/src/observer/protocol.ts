@@ -1,26 +1,29 @@
 /**
- * Wire protocol between the core Node process (EventBus tap -> WebSocket) and
- * the Next.js Principal UI.
+ * Wire protocol between the core Node process and the Next.js Principal UI.
  *
- * Versioned and typed. Domain payloads reuse the existing core schema types so
- * the web app stays in lock-step with the backend. This module is type-only at
- * runtime apart from {@link PROTOCOL_VERSION} and the small parse/guard
- * helpers, so it is safe to import (type-only) from a browser bundle via the
- * `@xevos/core/protocol` export.
+ * Hybrid sync model:
+ *   - Live ORG STATE (small: agent roster, prompts, aggregate stats) is pushed
+ *     in full as an `org` frame on connect and again whenever it changes.
+ *   - TASKS and MESSAGES are historical/large: the client loads them via the
+ *     paginated HTTP endpoints (`/tasks`, `/messages`) and then receives only
+ *     `task` upsert and `message` append deltas over the socket.
+ *   - Raw `event` frames continue to stream for the live event log view.
+ *
+ * Type-only at runtime apart from PROTOCOL_VERSION and the parse/guard helpers,
+ * so it is safe to import from a browser bundle via `@xevos/core/protocol`.
  */
 
 import type {
   Agent,
+  AgentStatus,
   Department,
   Event,
   EventId,
-  MemoryWarehouse,
   Role,
   Task,
+  TaskStatus,
 } from "../core/schema";
 
-// Re-export the domain types the UI needs so the web app has a single,
-// dependency-light import surface: `@xevos/core/protocol`.
 export type {
   Agent,
   AgentEvent,
@@ -40,7 +43,7 @@ export type {
 } from "../core/schema";
 
 /** Bump when the frame shapes below change incompatibly. */
-export const PROTOCOL_VERSION = 1 as const;
+export const PROTOCOL_VERSION = 2 as const;
 export type ProtocolVersion = typeof PROTOCOL_VERSION;
 
 export interface PromptsSnapshot {
@@ -48,46 +51,86 @@ export interface PromptsSnapshot {
   departments: Partial<Record<Department, string>>;
 }
 
-/**
- * Full state captured from the lowdb-backed stores at connect time. The web app
- * seeds its state from this, then folds in subsequent {@link EventFrame}s.
- */
-export interface Snapshot {
+/** Aggregate, always-complete view of organization health. */
+export interface OrgStats {
+  agents: number;
+  activeAgents: number;
+  activeWorkers: number;
+  byRole: Partial<Record<Role, number>>;
+  byStatus: Partial<Record<AgentStatus, number>>;
+  tasks: number;
+  runningTasks: number;
+  tasksByStatus: Partial<Record<TaskStatus, number>>;
+  /** Pending (unprocessed) items across all inbox queues. */
+  queueDepth: number;
+}
+
+/** The full live org state — small enough to resend whole on every change. */
+export interface OrgState {
   protocolVersion: ProtocolVersion;
-  /** Epoch millis the snapshot was captured. */
   capturedAt: number;
-  /**
-   * Highest event sequence number reflected in this snapshot. Event frames with
-   * a sequence at or below this were already folded into the stores, so the
-   * client can safely ignore them as duplicates.
-   */
-  throughSeq: number;
   agents: Agent[];
-  tasks: Task[];
   prompts: PromptsSnapshot;
-  memoryWarehouse: MemoryWarehouse[];
+  stats: OrgStats;
+}
+
+/** A principal <-> agent conversation message, derived from a `message` event. */
+export interface Message {
+  id: EventId;
+  /** events.seq — the pagination cursor (descending). */
+  seq: number;
+  ts: number;
+  from: string;
+  to: string;
+  /** True when sent by the principal (the UI). */
+  outgoing: boolean;
+  content: string;
+}
+
+/** One page of a descending, cursor-paginated history. */
+export interface Page<T> {
+  items: T[];
+  /** Cursor to pass as `before` for the next (older) page, or null if exhausted. */
+  nextCursor: number | null;
 }
 
 interface FrameBase {
   v: ProtocolVersion;
-  /** Monotonic per-connection frame counter. */
-  seq: number;
   /** Epoch millis the frame was emitted. */
   ts: number;
 }
 
-export interface SnapshotFrame extends FrameBase {
-  kind: "snapshot";
-  data: Snapshot;
+/** Full org state — initial and on every change. */
+export interface OrgFrame extends FrameBase {
+  kind: "org";
+  org: OrgState;
 }
 
+/** A task was created or changed; client upserts it by id. */
+export interface TaskDeltaFrame extends FrameBase {
+  kind: "task";
+  task: Task;
+}
+
+/** A new conversation message; client appends it. */
+export interface MessageDeltaFrame extends FrameBase {
+  kind: "message";
+  message: Message;
+}
+
+/** Raw event for the live event-log view. */
 export interface EventFrame extends FrameBase {
   kind: "event";
+  seq: number;
   event: Event;
 }
 
 /** Anything the server may push to a connected client. */
-export type ServerFrame = SnapshotFrame | EventFrame;
+export type ServerFrame =
+  | OrgFrame
+  | TaskDeltaFrame
+  | MessageDeltaFrame
+  | EventFrame;
 
 /** A message the UI sends to the executive over the same WebSocket. */
 export interface PrincipalMessageFrame {
@@ -96,7 +139,6 @@ export interface PrincipalMessageFrame {
   content: string;
 }
 
-/** Anything a client may push to the server. */
 export type ClientFrame = PrincipalMessageFrame;
 
 export function principalMessageFrame(content: string): PrincipalMessageFrame {
@@ -108,57 +150,33 @@ export function eventSeq(id: EventId): number {
   return Number(id.slice("event_".length));
 }
 
-/**
- * Narrow an untrusted parsed value to a {@link ServerFrame}. Validates only the
- * envelope (version + discriminant), not the full domain payload — payloads are
- * produced by the trusted core process.
- */
+const SERVER_KINDS = new Set(["org", "task", "message", "event"]);
+
+/** Narrow an untrusted parsed value to a {@link ServerFrame} (envelope only). */
 export function isServerFrame(value: unknown): value is ServerFrame {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-
+  if (typeof value !== "object" || value === null) return false;
   const frame = value as Record<string, unknown>;
-
-  if (frame.v !== PROTOCOL_VERSION) {
-    return false;
-  }
-
-  if (typeof frame.seq !== "number" || typeof frame.ts !== "number") {
-    return false;
-  }
-
-  if (frame.kind === "snapshot") {
-    return typeof frame.data === "object" && frame.data !== null;
-  }
-
-  if (frame.kind === "event") {
-    return typeof frame.event === "object" && frame.event !== null;
-  }
-
-  return false;
+  return (
+    frame.v === PROTOCOL_VERSION &&
+    typeof frame.kind === "string" &&
+    SERVER_KINDS.has(frame.kind)
+  );
 }
 
 /** Parse a raw text frame into a typed {@link ServerFrame}, or null if invalid. */
 export function parseServerFrame(raw: string): ServerFrame | null {
   let parsed: unknown;
-
   try {
     parsed = JSON.parse(raw);
   } catch {
     return null;
   }
-
   return isServerFrame(parsed) ? parsed : null;
 }
 
 export function isClientFrame(value: unknown): value is ClientFrame {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-
+  if (typeof value !== "object" || value === null) return false;
   const frame = value as Record<string, unknown>;
-
   return (
     frame.v === PROTOCOL_VERSION &&
     frame.kind === "principal_message" &&
@@ -169,12 +187,10 @@ export function isClientFrame(value: unknown): value is ClientFrame {
 /** Parse a raw text frame into a typed {@link ClientFrame}, or null if invalid. */
 export function parseClientFrame(raw: string): ClientFrame | null {
   let parsed: unknown;
-
   try {
     parsed = JSON.parse(raw);
   } catch {
     return null;
   }
-
   return isClientFrame(parsed) ? parsed : null;
 }

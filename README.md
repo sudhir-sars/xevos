@@ -26,14 +26,16 @@ It is built on two hard assumptions:
    and talk to the outside world without a human in the loop is exactly as risky as
    it is useful. Governance is a first-class layer, not a footnote.
 
-> **Status: working runtime + live dashboard.** The organization runs end to end
-> today — a principal talks to the executive, work flows down the hierarchy,
-> workers execute with tools, an independent Auditor verifies the result against
-> the agent's real actions, and everything streams to a web dashboard in real
-> time. The continuous-operation and governance layers (a clock, durability,
-> budgets, approval gates, kill switch) are the next milestones — see
-> [Where this is headed](#where-this-is-headed) for the honest gap between today
-> and a company that runs itself.
+> **Status: working runtime + durable substrate + live dashboard.** The
+> organization runs end to end today — a principal talks to the executive, work
+> flows down the hierarchy, workers execute with tools, an independent Auditor
+> verifies the result against the agent's real actions, and everything streams to
+> a web dashboard in real time. State is durable: a single local SQLite database
+> backs every store, the event bus persists an audit log and a recoverable work
+> queue, and semantic memory recall runs on sqlite-vec. The continuous-operation
+> and governance layers (a clock, budgets, approval gates, kill switch) are the
+> next milestones — see [Where this is headed](#where-this-is-headed) for the
+> honest gap between today and a company that runs itself.
 
 ---
 
@@ -43,8 +45,8 @@ It is built on two hard assumptions:
 
 | Package        | What it is                                                                                                                 |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `@xevos/core`  | The runtime: the agent loop, the event bus, the role/department model, the tool layer, the stateless Auditor, persistence, and a WebSocket observer that taps every event. |
-| `@xevos/web`   | A Next.js dashboard that connects to the observer, seeds from a store snapshot, and streams the live event feed — the org's mission control and the principal's chat surface. |
+| `@xevos/core`  | The runtime: the agent loop, the durable event bus, the role/department model, the tool layer, the stateless Auditor, SQLite/Drizzle persistence, and an HTTP+WebSocket observer. |
+| `@xevos/web`   | A Next.js dashboard: a live org-state snapshot, paginated task/message history with real-time deltas, and the principal's chat surface — the org's mission control. |
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
@@ -57,14 +59,14 @@ It is built on two hard assumptions:
 │  VERIFICATION       independent stateless Auditor that judges  │  ← implemented
 │                     against real tool history & sandbox state  │
 ├────────────────────────────────────────────────────────────────┤
-│  COORDINATION LAYER event bus · mailboxes · direct vs bus      │  ← implemented
-│                     tools · escalation routing                 │
+│  COORDINATION LAYER durable event bus · audit log · inbox     │  ← implemented
+│                     queue · direct vs bus tools · escalation   │
 ├────────────────────────────────────────────────────────────────┤
 │  AGENT RUNTIME      the perceive→reason→act→observe loop,      │  ← implemented
 │                     one BaseAgent per seat                     │
 ├────────────────────────────────────────────────────────────────┤
-│  SUBSTRATE          memory stores · tool registry · Docker     │  ← implemented
-│                     sandboxes · model pool · observability     │
+│  SUBSTRATE          SQLite + Drizzle + sqlite-vec · tool       │  ← implemented
+│                     registry · Docker sandboxes · model pool   │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -165,6 +167,32 @@ What makes the verdict trustworthy:
 
 ---
 
+## Persistence & durability
+
+State is the org's single source of truth, and it lives in **one local SQLite
+file** — no external database or service to run.
+
+- **SQLite + Drizzle ORM** over `better-sqlite3` (WAL mode) backs every store:
+  agents, tasks, per-agent memory, the memory warehouse, prompts, and the
+  id-allocation counters. `better-sqlite3` is synchronous, so reads stay sync and
+  writes run in real transactions (no lost-update races). Schema lives in
+  `packages/core/src/db/schema.ts`; migrations are generated with `drizzle-kit`.
+- **Semantic memory recall** uses the **sqlite-vec** extension: archived learnings
+  are embedded (`gemini-embedding-001`) and recalled by cosine KNN. Vectors are
+  stored raw (un-normalized) so they stay portable to a cloud vector DB later.
+- **The event bus is durable.** Every published event is appended to an immutable
+  `events` audit log, and every targeted event is written to a per-recipient
+  `inbox` queue before delivery. Delivery is at-least-once — an event is acked
+  only once the consumer comes back for more work — and `recover()` replays
+  anything left unprocessed by a crash on the next start.
+- **Hybrid UI sync** keeps the dashboard live without resyncing everything:
+  small **org state** (roster, prompts, aggregate stats) is pushed whole on
+  connect and on change; **tasks** and **messages** load via paginated HTTP
+  (`/tasks`, `/messages`) and then receive only upsert/append deltas; raw events
+  stream for the live log.
+
+---
+
 ## Core schemas
 
 The data model is a small set of schemas: **Agent**, **Task**, **Memory**, and the
@@ -218,33 +246,36 @@ automatically):
 | --------------------------------- | -------------------------------------------------------------------------------------------- |
 | `GOOGLE_GENERATIVE_AI_API_KEY`    | Single Google Gemini key (the default if no pool is set).                                    |
 | `GOOGLE_API_KEYS`                 | Comma-separated pool of keys (each a separate quota bucket) for higher aggregate throughput. |
-| `GEMINI_RPM_PER_KEY`              | Per-key requests/minute cap for the rate limiter (default `15`).                             |
-| `MODEL_MAX_CONCURRENCY`           | Max in-flight model calls at once (defaults to the key count).                               |
-| `EXA_API_KEY`                     | Enables the `web_search` tool (research workers). Absent → clean tool error.                 |
-| `XEVOS_OBSERVER_PORT`             | Port for the observer WebSocket + snapshot server (default `7077`).                          |
-| `NEXT_PUBLIC_XEVOS_WS_URL` / `…_SNAPSHOT_URL` | Where the dashboard connects (defaults point at `127.0.0.1:7077`).               |
+| `GEMINI_RPM_PER_KEY`              | Per-key requests/minute cap for the rate limiter (default `15`).        |
+| `MODEL_MAX_CONCURRENCY`           | Max in-flight model calls at once (defaults to the key count).          |
+| `EXA_API_KEY`                     | Enables the `web_search` tool (research workers). Absent → clean tool error. |
+| `XEVOS_DB_PATH`                   | SQLite database file (default `./storage/xevos.db`, relative to `packages/core`). |
+| `XEVOS_OBSERVER_PORT`             | Port for the observer HTTP + WebSocket server (default `7077`).         |
+| `NEXT_PUBLIC_XEVOS_WS_URL` / `…_HTTP_URL` | Where the dashboard connects (defaults point at `127.0.0.1:7077`). |
 
 Engineering workers run inside **Docker** sandboxes, so a running Docker daemon is
-required for engineering work. `docker-compose.yml` is also provided for a local
-Qdrant instance for future vector-backed memory.
+required for engineering work. Everything else (including vector search) is
+embedded in the single SQLite file — there is no separate database service to run.
 
 ### Project layout
 
 ```
 apps/
-  web/                # Next.js dashboard: live event feed + principal chat
+  web/                # Next.js dashboard: org snapshot + paginated history + chat
 packages/
   core/
     src/
       index.ts        # entrypoint: wires repos, services, bus, observer
       core/
         agents/       # BaseAgent — the one agent, the perceive→act→observe loop
-        event-bus/    # in-memory mailboxes + broadcast taps
+        event-bus/    # durable mailboxes + audit log + inbox queue (SQLite)
         services/     # agent, task, memory, tool, and the Auditor (audit.ts)
         sandbox/      # Docker sandbox for engineering workers
-      repositories/   # lowdb-backed Agent / Task / Memory / Prompt stores
-      observer/       # WebSocket server + store snapshot the dashboard consumes
-    storage/          # lowdb JSON stores (agents, tasks, memories, prompts)
+      db/             # Drizzle schema + client (SQLite, WAL, sqlite-vec)
+      repositories/   # Drizzle/SQLite-backed Agent / Task / Memory / Prompt stores
+      observer/       # HTTP + WebSocket: org snapshot, paginated history, deltas
+    drizzle/          # generated SQL migrations
+    storage/          # the SQLite database (xevos.db, gitignored)
 ```
 
 ---
@@ -269,12 +300,11 @@ objectives that are never "done". Everything below depends on that.
    standups, marketing reviews), external event ingestion (email, tickets, signups,
    payments, CI failures, alerts → bus events), standing KPI-driven objectives, and
    liveness so no agent parks forever.
-2. **Durability** — the event bus and stores are in-memory/JSON today; a crash loses
-   in-flight work. Needs a persisted, replayable event log, crash recovery, and
-   idempotency so restarts never double-act. **Migrating the substrate to
-   [Convex](https://convex.dev)** (already the intended backend) delivers durable
-   reactive storage, scheduled functions (the clock), and real-time subscriptions in
-   one move — the highest-leverage single step.
+2. **Durability** — _done._ The substrate is a single local **SQLite** database
+   (Drizzle + sqlite-vec): transactional stores, an append-only event audit log,
+   and a recoverable `inbox` queue with at-least-once delivery. The remaining
+   hardening is **idempotency keys** on outbound/side-effecting actions so an
+   at-least-once replay never double-acts (e.g. sends the same email twice).
 3. **Real-world tools** — authenticated connectors per department: support (inbox,
    help desk, KB), marketing (CMS, social, campaigns, analytics), engineering (GitHub,
    CI, deploy, error monitoring — the code sandbox already exists), legal (doc gen +
@@ -302,13 +332,14 @@ Built bottom-up, substrate first. Done today:
 - [x] **Role ladder & charters** — executive, heads, managers, workers + per-department prompts
 - [x] **Independent verification** — stateless Auditor grounded in real tool history and sandbox state
 - [x] **Citation provenance** — structured sources that flow up the org unchanged
-- [x] **Observability** — WebSocket event tap + live web dashboard
+- [x] **Durable substrate** — SQLite + Drizzle + sqlite-vec; event audit log + recoverable inbox queue
+- [x] **Observability** — HTTP + WebSocket observer with hybrid sync (org snapshot + paginated history + deltas)
 
 Toward a self-running company, in order:
 
-- [ ] **Phase 1 — Durable substrate (Convex):** persisted event log, reactive stores, crash recovery
+- [ ] **Phase 1 — Idempotency:** dedup keys on outbound/side-effecting actions (the last gap in at-least-once delivery)
 - [ ] **Phase 2 — Continuous loop:** scheduler/heartbeat, external event ingestion, standing objectives + KPI tracking
-- [ ] **Phase 3 — Governance brakes:** enforced budgets, persisted audit log, kill switch, outbound rate limits
+- [ ] **Phase 3 — Governance brakes:** enforced budgets, kill switch, outbound rate limits, policy layer
 - [ ] **Phase 4 — First real department (narrow & reversible):** e.g. support email triage with drafted replies, or engineering on GitHub + CI
 - [ ] **Phase 5 — Per-department auditing + feedback loops:** outcome measurement, re-planning, post-mortems
 - [ ] **Phase 6 — Widen integrations & loosen gates** per the maturity model

@@ -1,37 +1,26 @@
 // repositories/agent-memory.repository.ts
 
-import { JSONFilePreset } from "lowdb/node";
-import { ModelMessage } from "ai";
-import { AgentId, AgentMemory } from "../../core/schema";
-import { ensureStorageFile } from "../utils";
+import { eq } from "drizzle-orm";
+import type { ModelMessage } from "ai";
 
-type AgentMemoryDatabase = {
-  agentMemories: AgentMemory[];
-};
-
-type AgentMemoryDb = Awaited<
-  ReturnType<typeof JSONFilePreset<AgentMemoryDatabase>>
->;
+import type { AgentId, AgentMemory } from "../../core/schema";
+import { getDb, type DB } from "../../db/client";
+import { agentMemories } from "../../db/schema";
 
 export class AgentMemoryRepository {
-  constructor(private readonly db: AgentMemoryDb) {}
+  constructor(private readonly db: DB) {}
 
-  static async create(
-    file = "./storage/agent-memories.json",
-  ): Promise<AgentMemoryRepository> {
-    const db = await JSONFilePreset<AgentMemoryDatabase>(
-      await ensureStorageFile(file),
-      {
-        agentMemories: [],
-      },
-    );
-
-    return new AgentMemoryRepository(db);
+  static async create(): Promise<AgentMemoryRepository> {
+    return new AgentMemoryRepository(getDb());
   }
 
   async get(agentId: AgentId): Promise<AgentMemory | null> {
     return (
-      this.db.data.agentMemories.find((m) => m.agentId === agentId) ?? null
+      this.db
+        .select()
+        .from(agentMemories)
+        .where(eq(agentMemories.agentId, agentId))
+        .get() ?? null
     );
   }
 
@@ -39,30 +28,33 @@ export class AgentMemoryRepository {
     agentId: AgentId,
     newMessages: ModelMessage[],
   ): Promise<AgentMemory> {
-    let memory = this.db.data.agentMemories.find((m) => m.agentId === agentId);
+    return this.db.transaction((tx): AgentMemory => {
+      const existing = tx
+        .select()
+        .from(agentMemories)
+        .where(eq(agentMemories.agentId, agentId))
+        .get();
 
-    if (!memory) {
-      const newMemory: AgentMemory = {
-        agentId,
-        messages: newMessages,
-        updatedAt: Date.now(),
-      };
+      const messages = [...(existing?.messages ?? []), ...newMessages];
+      const updatedAt = Date.now();
 
-      this.db.data.agentMemories.push(newMemory);
-      memory = newMemory;
-    } else {
-      memory.messages.push(...newMessages);
-      memory.updatedAt = Date.now();
-    }
+      if (existing) {
+        tx.update(agentMemories)
+          .set({ messages, updatedAt })
+          .where(eq(agentMemories.agentId, agentId))
+          .run();
+      } else {
+        tx.insert(agentMemories).values({ agentId, messages, updatedAt }).run();
+      }
 
-    await this.db.write();
-    return memory;
+      return { agentId, messages, updatedAt };
+    });
   }
 
   async clear(agentId: AgentId): Promise<void> {
-    this.db.data.agentMemories = this.db.data.agentMemories.filter(
-      (m) => m.agentId !== agentId,
-    );
-    await this.db.write();
+    this.db
+      .delete(agentMemories)
+      .where(eq(agentMemories.agentId, agentId))
+      .run();
   }
 }

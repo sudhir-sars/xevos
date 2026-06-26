@@ -32,5 +32,7 @@ Thumbs.db
 # Claude Code
 .claude/
 
-# Convex local files
-.convex/
+# Local SQLite database (source of truth; not committed)
+*.db
+*.db-wal
+*.db-shm

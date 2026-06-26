@@ -1,60 +1,77 @@
-import { JSONFilePreset } from "lowdb/node";
+import { eq } from "drizzle-orm";
+
 import {
   Department,
   Role,
   departmentSchema,
   roleSchema,
 } from "../../core/schema";
+import { getDb, type DB } from "../../db/client";
+import { prompts } from "../../db/schema";
 import { DEPARTMENT_PROMPTS, ROLE_PROMPTS } from "./default-prompts";
-import { ensureStorageFile } from "../utils";
 
-type PromptDatabase = {
-  roles: Partial<Record<Role, string>>;
-  departments: Partial<Record<Department, string>>;
-};
-
-type PromptDb = Awaited<ReturnType<typeof JSONFilePreset<PromptDatabase>>>;
+const roleKey = (role: Role): string => `role:${role}`;
+const departmentKey = (department: Department): string =>
+  `department:${department}`;
 
 export class PromptRepository {
-  constructor(private readonly db: PromptDb) {}
+  // Prompts rarely change and are read on every turn, so they are cached in
+  // memory and kept in sync with the DB on save (preserving the sync getters).
+  private readonly roles = new Map<Role, string>();
+  private readonly departments = new Map<Department, string>();
 
-  static async create(
-    file = "./storage/prompts.json",
-  ): Promise<PromptRepository> {
-    const db = await JSONFilePreset<PromptDatabase>(
-      await ensureStorageFile(file),
-      {
-        roles: {},
-        departments: {},
-      },
-    );
+  constructor(private readonly db: DB) {}
 
-    const repository = new PromptRepository(db);
-    await repository.seedDefaults();
-
+  static async create(): Promise<PromptRepository> {
+    const repository = new PromptRepository(getDb());
+    repository.seedDefaults();
+    repository.loadCache();
     return repository;
   }
 
-  private async seedDefaults(): Promise<void> {
-    let changed = false;
+  private seedDefaults(): void {
+    const rows: { key: string; content: string; updatedAt: number }[] = [];
+    const now = Date.now();
 
     for (const role of roleSchema.options) {
-      if (this.db.data.roles[role] === undefined) {
-        this.db.data.roles[role] = ROLE_PROMPTS[role];
-        changed = true;
-      }
+      rows.push({ key: roleKey(role), content: ROLE_PROMPTS[role], updatedAt: now });
     }
-
     for (const department of departmentSchema.options) {
-      if (this.db.data.departments[department] === undefined) {
-        this.db.data.departments[department] = DEPARTMENT_PROMPTS[department];
-        changed = true;
-      }
+      rows.push({
+        key: departmentKey(department),
+        content: DEPARTMENT_PROMPTS[department],
+        updatedAt: now,
+      });
     }
 
-    if (changed) {
-      await this.db.write();
+    // Insert defaults only where absent; never clobber edited prompts.
+    for (const row of rows) {
+      this.db.insert(prompts).values(row).onConflictDoNothing().run();
     }
+  }
+
+  private loadCache(): void {
+    for (const row of this.db.select().from(prompts).all()) {
+      if (row.key.startsWith("role:")) {
+        this.roles.set(row.key.slice("role:".length) as Role, row.content);
+      } else if (row.key.startsWith("department:")) {
+        this.departments.set(
+          row.key.slice("department:".length) as Department,
+          row.content,
+        );
+      }
+    }
+  }
+
+  private upsert(key: string, content: string): void {
+    this.db
+      .insert(prompts)
+      .values({ key, content, updatedAt: Date.now() })
+      .onConflictDoUpdate({
+        target: prompts.key,
+        set: { content, updatedAt: Date.now() },
+      })
+      .run();
   }
 
   /** Snapshot of all role and department prompts (defensive copies). */
@@ -63,34 +80,26 @@ export class PromptRepository {
     departments: Partial<Record<Department, string>>;
   } {
     return {
-      roles: { ...this.db.data.roles },
-      departments: { ...this.db.data.departments },
+      roles: Object.fromEntries(this.roles),
+      departments: Object.fromEntries(this.departments),
     };
   }
 
   getRolePrompt(role: Role): string {
-    const prompt = this.db.data.roles[role];
-
-    if (!prompt) {
-      throw new Error(`Role prompt not found for "${role}"`);
-    }
-
+    const prompt = this.roles.get(role);
+    if (!prompt) throw new Error(`Role prompt not found for "${role}"`);
     return prompt;
   }
 
   async saveRolePrompt(role: Role, prompt: string): Promise<void> {
-    this.db.data.roles[role] = prompt;
-
-    await this.db.write();
+    this.upsert(roleKey(role), prompt);
+    this.roles.set(role, prompt);
   }
 
   getDepartmentPrompt(department: Department): string {
-    const prompt = this.db.data.departments[department];
-
-    if (!prompt) {
+    const prompt = this.departments.get(department);
+    if (!prompt)
       throw new Error(`Department prompt not found for "${department}"`);
-    }
-
     return prompt;
   }
 
@@ -98,9 +107,8 @@ export class PromptRepository {
     department: Department,
     prompt: string,
   ): Promise<void> {
-    this.db.data.departments[department] = prompt;
-
-    await this.db.write();
+    this.upsert(departmentKey(department), prompt);
+    this.departments.set(department, prompt);
   }
 
   getAgentPrompt(
@@ -112,7 +120,6 @@ export class PromptRepository {
   } {
     return {
       rolePrompt: this.getRolePrompt(role),
-
       departmentPrompt: this.getDepartmentPrompt(department),
     };
   }

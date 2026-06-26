@@ -1,4 +1,8 @@
 import type { AgentId, EndpointId, Event, EventId, ServiceId } from "../schema";
+import type { EventStore } from "./store";
+
+export type { EventStore } from "./store";
+export { DrizzleEventStore } from "./store";
 
 type SubscriptionId = AgentId | ServiceId | EndpointId;
 
@@ -12,37 +16,67 @@ export type EventInput = Omit<Event, "id">;
  */
 export type EventObserver = (event: Event) => void;
 
-export class Mailbox {
-  private readonly queue: Event[] = [];
-  private waiter?: (event: Event) => void;
+interface Slot {
+  event: Event;
+  /** Inbox row backing this delivery, if durably queued. */
+  inboxId?: number;
+}
 
-  push(event: Event): void {
+export class Mailbox {
+  private readonly queue: Slot[] = [];
+  private waiter?: (slot: Slot) => void;
+  /**
+   * The event most recently handed out and not yet acknowledged. It is acked
+   * (its inbox row marked consumed) on the NEXT takeNext — i.e. once the
+   * consumer comes back for more work, proving it finished the previous event.
+   * This gives at-least-once delivery: a crash mid-handling leaves the event
+   * pending, so it is replayed on restart.
+   */
+  private inFlight?: Slot;
+
+  constructor(private readonly onConsume?: (inboxId: number) => void) {}
+
+  push(event: Event, inboxId?: number): void {
+    const slot: Slot = { event, inboxId };
+
     if (this.waiter) {
       const resolve = this.waiter;
-
       this.waiter = undefined;
-      resolve(event);
-
+      resolve(slot);
       return;
     }
 
-    this.queue.push(event);
+    this.queue.push(slot);
   }
 
   async takeNext(): Promise<Event> {
-    const event = this.queue.shift();
+    this.ackInFlight();
 
-    if (event) {
-      return event;
+    const slot = this.queue.shift();
+
+    if (slot) {
+      this.inFlight = slot;
+      return slot.event;
     }
 
     if (this.waiter) {
       throw new Error("Mailbox already has a pending consumer");
     }
 
-    return new Promise((resolve) => {
-      this.waiter = resolve;
+    return new Promise<Event>((resolve) => {
+      this.waiter = (next) => {
+        this.inFlight = next;
+        resolve(next.event);
+      };
     });
+  }
+
+  /** Acknowledge the previously delivered event as processed. */
+  private ackInFlight(): void {
+    if (this.inFlight?.inboxId !== undefined) {
+      this.onConsume?.(this.inFlight.inboxId);
+    }
+    this.inFlight = undefined;
   }
 
   get size(): number {
@@ -57,7 +91,17 @@ export class EventBus {
   private readonly observers = new Set<EventObserver>();
 
   /** Monotonic publish counter — the source of strictly-increasing event ids. */
-  private seq = 0;
+  private seq: number;
+
+  /**
+   * @param store optional durable backing. When present, every event is written
+   *   to the audit log and every targeted event to the durable inbox, and
+   *   {@link recover} can replay unprocessed work after a restart. Without it the
+   *   bus is purely in-memory (e.g. for isolated tests).
+   */
+  constructor(private readonly store?: EventStore) {
+    this.seq = store?.maxSeq() ?? 0;
+  }
 
   private nextEventId(): EventId {
     return `event_${++this.seq}` as EventId;
@@ -72,7 +116,9 @@ export class EventBus {
   }
 
   subscribe(id: SubscriptionId): Mailbox {
-    const mailbox = new Mailbox();
+    const mailbox = new Mailbox(
+      this.store ? (inboxId) => this.store?.markConsumed(inboxId) : undefined,
+    );
 
     this.mailboxes.set(id, mailbox);
 
@@ -105,8 +151,17 @@ export class EventBus {
       id: this.nextEventId(),
     } as T;
 
-    // Point-to-point delivery (unchanged).
-    this.mailboxes.get(envelope.target)?.push(envelope);
+    // Durable audit log: every event, even fire-and-forget observations.
+    this.store?.append(this.seq, envelope);
+
+    // Point-to-point delivery. When there is a subscriber AND a store, the
+    // event is durably queued first so a crash before it is processed is
+    // recoverable; the inbox id rides along so the mailbox can ack it.
+    const mailbox = this.mailboxes.get(envelope.target);
+    if (mailbox) {
+      const inboxId = this.store?.enqueue(envelope.target, envelope);
+      mailbox.push(envelope, inboxId);
+    }
 
     // Broadcast to taps. A misbehaving observer must never break delivery
     // or the publisher, so failures are isolated and logged.
@@ -119,6 +174,30 @@ export class EventBus {
     }
 
     return envelope.id;
+  }
+
+  /**
+   * Replay durably-queued work that was never processed (e.g. left in flight by
+   * a crash). Call AFTER subscribers are registered so deliveries land in live
+   * mailboxes; events whose target is not subscribed are left pending.
+   */
+  recover(): number {
+    if (!this.store) return 0;
+
+    let replayed = 0;
+    for (const { target, event, inboxId } of this.store.loadPending()) {
+      const mailbox = this.mailboxes.get(target as SubscriptionId);
+      if (mailbox) {
+        mailbox.push(event, inboxId);
+        replayed++;
+      }
+    }
+
+    if (replayed > 0) {
+      console.log(`[event-bus] recovered ${replayed} pending event(s)`);
+    }
+
+    return replayed;
   }
 
   getMailbox(id: SubscriptionId): Mailbox {

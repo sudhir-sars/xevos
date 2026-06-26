@@ -6,219 +6,274 @@ import {
   parseServerFrame,
   principalMessageFrame,
   type Event,
-  type Snapshot,
+  type Message,
+  type OrgState,
+  type Page,
+  type Task,
 } from "@xevos/core/protocol";
 
 import {
   MAX_FEED,
+  MESSAGES_URL,
+  PAGE_SIZE,
   RECONNECT_DELAY_MS,
-  REFRESH_DEBOUNCE_MS,
-  SNAPSHOT_URL,
+  TASKS_URL,
   WS_URL,
 } from "./config";
 
 export type ConnectionStatus = "connecting" | "open" | "closed";
 
 export interface FeedItem {
-  /** Per-connection frame sequence (unique within a session). */
   seq: number;
   ts: number;
   event: Event;
 }
 
-export interface StreamState {
+interface State {
   status: ConnectionStatus;
-  /** Base state captured from the lowdb stores; null until first snapshot. */
-  snapshot: Snapshot | null;
-  /** Live tail of events from the EventBus tap, newest first. */
+  /** Live org state (snapshot + deltas); null until first frame. */
+  org: OrgState | null;
+  /** Tasks, newest-first; initial page via HTTP, then delta upserts. */
+  tasks: Task[];
+  hasMoreTasks: boolean;
+  /** Conversation messages, oldest-first; paginated history + append deltas. */
+  messages: Message[];
+  hasMoreMessages: boolean;
+  /** Live raw-event tail, newest-first, capped (the Events view). */
   feed: FeedItem[];
-  /** Total events received this session (feed is capped; this is not). */
-  received: number;
   lastError: string | null;
 }
 
-type Action =
-  | { type: "connecting" }
-  | { type: "open" }
-  | { type: "closed" }
-  | { type: "snapshot"; snapshot: Snapshot }
-  | { type: "event"; item: FeedItem };
-
-const initialState: StreamState = {
+const initialState: State = {
   status: "connecting",
-  snapshot: null,
+  org: null,
+  tasks: [],
+  hasMoreTasks: false,
+  messages: [],
+  hasMoreMessages: false,
   feed: [],
-  received: 0,
   lastError: null,
 };
 
-/**
- * Event types that imply a store mutation, and so warrant refreshing the
- * snapshot (the bus carries signals, not full state deltas, so panels reflecting
- * the stores are refetched rather than patched). These are the legacy bus
- * request/response signals — still handled in case any path uses them.
- */
-const STORE_MUTATING: ReadonlySet<Event["type"]> = new Set<Event["type"]>([
-  "task_create_response",
-  "task_update_response",
-  "task_transition_response",
-  "agent_creation_response",
-  "agent_suspension_response",
-  "agent_resume_response",
-  "agent_termination_response",
-]);
+type Action =
+  | { type: "status"; status: ConnectionStatus }
+  | { type: "org"; org: OrgState }
+  | { type: "task"; task: Task }
+  | { type: "message"; message: Message }
+  | { type: "event"; item: FeedItem }
+  | { type: "tasksPage"; items: Task[]; hasMore: boolean; initial: boolean }
+  | { type: "messagesPage"; items: Message[]; hasMore: boolean; initial: boolean };
 
-/**
- * TRIVIAL tools now apply their effect DIRECTLY (no bus request/response) and
- * announce it with a `tool_executed` observation event instead. These tool names
- * change the lowdb stores (agents/tasks), so an observation for any of them must
- * also trigger a snapshot refresh. (Coding tools mutate the sandbox, not the
- * stores, so they are intentionally excluded.)
- */
-const STORE_MUTATING_TOOLS: ReadonlySet<string> = new Set([
-  "create_subordinate_agent",
-  "create_and_assign_task",
-  "update_task_status",
-]);
-
-/** Whether an event implies a store change the snapshot panels should reflect. */
-function mutatesStore(event: Event): boolean {
-  if (STORE_MUTATING.has(event.type)) return true;
-  return (
-    event.type === "tool_executed" && STORE_MUTATING_TOOLS.has(event.body.tool)
-  );
+function upsertTask(tasks: Task[], task: Task): Task[] {
+  const i = tasks.findIndex((t) => t.id === task.id);
+  if (i === -1) return [task, ...tasks]; // new -> newest
+  const next = tasks.slice();
+  next[i] = task; // changed -> keep position
+  return next;
 }
 
-function reducer(state: StreamState, action: Action): StreamState {
+function appendMessage(messages: Message[], message: Message): Message[] {
+  if (messages.some((m) => m.seq === message.seq)) return messages;
+  return [...messages, message];
+}
+
+function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "connecting":
-      return { ...state, status: "connecting" };
-
-    case "open":
-      return { ...state, status: "open", lastError: null };
-
-    case "closed":
-      return { ...state, status: "closed" };
-
-    case "snapshot":
-      return { ...state, snapshot: action.snapshot };
-
+    case "status":
+      return {
+        ...state,
+        status: action.status,
+        lastError: action.status === "open" ? null : state.lastError,
+      };
+    case "org":
+      return { ...state, org: action.org };
+    case "task":
+      return { ...state, tasks: upsertTask(state.tasks, action.task) };
+    case "message":
+      return { ...state, messages: appendMessage(state.messages, action.message) };
     case "event":
       return {
         ...state,
-        received: state.received + 1,
         feed: [action.item, ...state.feed].slice(0, MAX_FEED),
       };
-
+    case "tasksPage": {
+      // HTTP pages are newest-first; initial replaces, "more" appends (older).
+      const merged = action.initial
+        ? action.items
+        : [...state.tasks, ...action.items.filter((t) => !state.tasks.some((s) => s.id === t.id))];
+      return { ...state, tasks: merged, hasMoreTasks: action.hasMore };
+    }
+    case "messagesPage": {
+      // HTTP pages are newest-first; we keep messages oldest-first.
+      const olderAsc = [...action.items].reverse();
+      const existing = new Set(state.messages.map((m) => m.seq));
+      const fresh = olderAsc.filter((m) => !existing.has(m.seq));
+      const merged = action.initial ? fresh : [...fresh, ...state.messages];
+      return { ...state, messages: merged, hasMoreMessages: action.hasMore };
+    }
     default:
       return state;
   }
 }
 
-/**
- * Connects to the core observer WebSocket: seeds state from the snapshot frame,
- * then appends live events. Reconnects automatically, and refetches the
- * snapshot (debounced) when a store-mutating event arrives so the store-backed
- * panels stay current.
- */
-export interface XevosStream extends StreamState {
-  /**
-   * Send a message to the executive over the live socket. Returns false if the
-   * socket is not currently open (the caller can surface a "not connected"
-   * error) — the message is not queued.
-   */
+export interface XevosStream extends State {
   sendMessage: (content: string) => boolean;
+  loadMoreTasks: () => void;
+  loadMoreMessages: () => void;
+}
+
+async function fetchPage<T>(
+  url: string,
+  before: number | null,
+): Promise<Page<T>> {
+  const u = new URL(url);
+  u.searchParams.set("limit", String(PAGE_SIZE));
+  if (before !== null) u.searchParams.set("before", String(before));
+  const res = await fetch(u.toString());
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as Page<T>;
 }
 
 export function useXevosStream(): XevosStream {
   const [state, dispatch] = useReducer(reducer, initialState);
   const socketRef = useRef<WebSocket | null>(null);
 
+  // Pagination cursors + in-flight guards live in refs to avoid stale closures.
+  const taskCursor = useRef<number | null>(null);
+  const messageCursor = useRef<number | null>(null);
+  const loadingTasks = useRef(false);
+  const loadingMessages = useRef(false);
+  const disposedRef = useRef(false);
+
+  const loadTasks = useCallback(async (initial: boolean) => {
+    if (loadingTasks.current) return;
+    if (!initial && taskCursor.current === null) return;
+    loadingTasks.current = true;
+    try {
+      const page = await fetchPage<Task>(
+        TASKS_URL,
+        initial ? null : taskCursor.current,
+      );
+      taskCursor.current = page.nextCursor;
+      if (!disposedRef.current) {
+        dispatch({
+          type: "tasksPage",
+          items: page.items,
+          hasMore: page.nextCursor !== null,
+          initial,
+        });
+      }
+    } catch {
+      /* non-fatal: deltas keep the view live */
+    } finally {
+      loadingTasks.current = false;
+    }
+  }, []);
+
+  const loadMessages = useCallback(async (initial: boolean) => {
+    if (loadingMessages.current) return;
+    if (!initial && messageCursor.current === null) return;
+    loadingMessages.current = true;
+    try {
+      const page = await fetchPage<Message>(
+        MESSAGES_URL,
+        initial ? null : messageCursor.current,
+      );
+      messageCursor.current = page.nextCursor;
+      if (!disposedRef.current) {
+        dispatch({
+          type: "messagesPage",
+          items: page.items,
+          hasMore: page.nextCursor !== null,
+          initial,
+        });
+      }
+    } catch {
+      /* non-fatal */
+    } finally {
+      loadingMessages.current = false;
+    }
+  }, []);
+
   useEffect(() => {
-    let disposed = false;
+    disposedRef.current = false;
     let socket: WebSocket | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const scheduleRefresh = (): void => {
-      if (refreshTimer) clearTimeout(refreshTimer);
-
-      refreshTimer = setTimeout(() => {
-        void fetch(SNAPSHOT_URL)
-          .then((res) =>
-            res.ok
-              ? (res.json() as Promise<Snapshot>)
-              : Promise.reject(new Error(`snapshot HTTP ${res.status}`)),
-          )
-          .then((snapshot) => {
-            if (!disposed) dispatch({ type: "snapshot", snapshot });
-          })
-          .catch(() => {
-            // Non-fatal: the WS snapshot/feed remain authoritative.
-          });
-      }, REFRESH_DEBOUNCE_MS);
-    };
 
     const connect = (): void => {
-      if (disposed) return;
-
-      dispatch({ type: "connecting" });
+      if (disposedRef.current) return;
+      dispatch({ type: "status", status: "connecting" });
       socket = new WebSocket(WS_URL);
       socketRef.current = socket;
 
-      socket.onopen = () => dispatch({ type: "open" });
+      socket.onopen = () => {
+        dispatch({ type: "status", status: "open" });
+        // Seed the paginated histories once connected.
+        void loadTasks(true);
+        void loadMessages(true);
+      };
 
       socket.onmessage = (ev: MessageEvent) => {
         if (typeof ev.data !== "string") return;
-
         const frame = parseServerFrame(ev.data);
         if (!frame) return;
 
-        if (frame.kind === "snapshot") {
-          dispatch({ type: "snapshot", snapshot: frame.data });
-          return;
+        switch (frame.kind) {
+          case "org":
+            dispatch({ type: "org", org: frame.org });
+            break;
+          case "task":
+            dispatch({ type: "task", task: frame.task });
+            break;
+          case "message":
+            dispatch({ type: "message", message: frame.message });
+            break;
+          case "event":
+            dispatch({
+              type: "event",
+              item: { seq: frame.seq, ts: frame.ts, event: frame.event },
+            });
+            break;
         }
-
-        dispatch({
-          type: "event",
-          item: { seq: frame.seq, ts: frame.ts, event: frame.event },
-        });
-
-        if (mutatesStore(frame.event)) scheduleRefresh();
       };
 
       socket.onclose = () => {
         if (socketRef.current === socket) socketRef.current = null;
-        dispatch({ type: "closed" });
-        if (!disposed) reconnectTimer = setTimeout(connect, RECONNECT_DELAY_MS);
+        dispatch({ type: "status", status: "closed" });
+        if (!disposedRef.current) {
+          reconnectTimer = setTimeout(connect, RECONNECT_DELAY_MS);
+        }
       };
     };
 
     connect();
 
     return () => {
-      disposed = true;
+      disposedRef.current = true;
       if (reconnectTimer) clearTimeout(reconnectTimer);
-      if (refreshTimer) clearTimeout(refreshTimer);
       socketRef.current = null;
       if (socket) {
         socket.onclose = null;
         socket.close();
       }
     };
-  }, []);
+  }, [loadTasks, loadMessages]);
 
   const sendMessage = useCallback((content: string): boolean => {
     const socket = socketRef.current;
     const trimmed = content.trim();
-
     if (!socket || socket.readyState !== WebSocket.OPEN || trimmed === "") {
       return false;
     }
-
     socket.send(JSON.stringify(principalMessageFrame(trimmed)));
     return true;
   }, []);
 
-  return { ...state, sendMessage };
+  const loadMoreTasks = useCallback(() => void loadTasks(false), [loadTasks]);
+  const loadMoreMessages = useCallback(
+    () => void loadMessages(false),
+    [loadMessages],
+  );
+
+  return { ...state, sendMessage, loadMoreTasks, loadMoreMessages };
 }

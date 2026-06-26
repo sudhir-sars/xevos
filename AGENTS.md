@@ -30,16 +30,16 @@ compiled with `tsc`. Source in `src/`, output in `dist/`.
 - Run `pnpm typecheck` before considering a change complete.
 - Don't commit or push unless explicitly asked.
 
-<!-- convex-ai-start -->
+## Persistence
 
-This project uses [Convex](https://convex.dev) as its backend.
+State lives in a local **SQLite** database (the org's single source of truth),
+accessed through **Drizzle ORM** over `better-sqlite3` (WAL mode). Semantic
+memory recall uses the **sqlite-vec** extension for vector KNN. No external
+database or service is required — it is one file under `packages/core/storage/`.
 
-When working on Convex code, **always read
-`convex/_generated/ai/guidelines.md` first** for important guidelines on
-how to correctly use Convex APIs and patterns. The file contains rules that
-override what you may have learned about Convex from training data.
-
-Convex agent skills for common tasks can be installed by running
-`npx convex ai-files install`.
-
-<!-- convex-ai-end -->
+- The schema is defined in `packages/core/src/db/schema.ts`; the connection,
+  migration apply, and vector-table setup live in `packages/core/src/db/client.ts`.
+- After changing the schema, regenerate the migration with
+  `pnpm --filter @xevos/core exec drizzle-kit generate` and commit it.
+- Repositories under `packages/core/src/repositories/` wrap Drizzle behind their
+  class interfaces; `better-sqlite3` is synchronous, so read methods stay sync.

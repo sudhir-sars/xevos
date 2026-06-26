@@ -133,7 +133,15 @@ function DetailField({
 /* Tasks                                                                       */
 /* -------------------------------------------------------------------------- */
 
-export function TaskTable({ tasks }: { tasks: Task[] }) {
+export function TaskTable({
+  tasks,
+  hasMore = false,
+  onLoadMore,
+}: {
+  tasks: Task[];
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+}) {
   const [selected, setSelected] = useState<Task | null>(null);
 
   if (tasks.length === 0) {
@@ -197,6 +205,16 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
           ))}
         </TableBody>
       </Table>
+
+      {hasMore && onLoadMore && (
+        <button
+          type="button"
+          onClick={onLoadMore}
+          className="mx-auto mt-3 block rounded-full px-3 py-1 text-xs text-muted-foreground hover:bg-muted"
+        >
+          Load older tasks
+        </button>
+      )}
 
       <TaskDetailDialog
         task={selected}
