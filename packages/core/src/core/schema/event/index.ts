@@ -7,5 +7,4 @@ export * from "./task";
 export * from "./observation";
 
 export type Event = AgentEvent | TaskEvent | ObservationEvent;
-
 export type EventRes<T> = Omit<T, "id" | "source">;

@@ -6,6 +6,13 @@ export type ServiceId = `${string}_service`;
 /** Any addressable participant on the bus. */
 export type EndpointId = AgentId | ServiceId | PrincipalId;
 
+
+export type EventType =
+  | "escalate"
+  | "delegate"
+  | "information_request"
+  | "information_response";
+  
 export interface BaseEvent {
   id: EventId;
   source: EndpointId;

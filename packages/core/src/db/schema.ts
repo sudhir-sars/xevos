@@ -3,153 +3,176 @@ import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import type { ModelMessage } from "ai";
 import type {
+  ActorId,
   AgentId,
+  ClosedReason,
   Department,
+  Event,
+  EventType,
   Learning,
-  ReportTargetId,
   Review,
   Role,
-  TaskBudget,
   TaskId,
   TaskPriority,
   TaskStatus,
   AgentStatus,
-  ClosedReason,
 } from "../core/schema";
 
-/**
- * Embedding width for memory-warehouse vectors. Matches Google's
- * text-embedding-004 / gemini-embedding default; change here AND in the
- * vec0 virtual table (see db/client.ts) if you swap embedding models.
- */
+
+
 export const EMBEDDING_DIMS = 768;
 
 const now = () => sql`(unixepoch('subsec') * 1000)`;
 
-/** JSON column helper: stored as TEXT, (de)serialized by Drizzle. */
 function json<T>(name: string) {
   return text(name, { mode: "json" }).$type<T>();
 }
 
-// ---- Org roster (was AgentRepository) ----
-export const agents = sqliteTable(
-  "agents",
+/*
+ * All actors in the system — orchestrators(human/meta-agent), CEO, heads, managers, and workers.
+ *
+ * role and department are null for orchestrator and CEO since they
+ * operate above the role-department hierarchy.
+ */
+export const actors = sqliteTable(
+  "actors",
   {
-    id: text("id").primaryKey().$type<AgentId>(), // readable id
-    role: text("role").$type<Role>().notNull(),
-    department: text("department").$type<Department>().notNull(),
-    objective: text("objective").notNull(),
-    kpis: json<string[]>("kpis").notNull(),
-    responsibilities: json<string[]>("responsibilities").notNull(),
+    actor_id: text("actor_id").$type<ActorId>().primaryKey(),
+    role: text("role").$type<Role>(),
+    department: text("department").$type<Department>(),
     manages: json<AgentId[]>("manages").notNull(),
-    reportsTo: text("reports_to").$type<ReportTargetId>().notNull(),
+    reports_to: text("reports_to").$type<ActorId>().notNull(),
     tools: json<string[]>("tools").notNull(),
     status: text("status").$type<AgentStatus>().notNull(),
-    createdAt: integer("created_at").notNull(),
+    created_at: integer("created_at").notNull().default(now()),
+    updated_at: integer("updated_at").notNull().default(now()),
   },
   (t) => [
-    index("agents_by_status").on(t.status),
-    index("agents_by_reports_to").on(t.reportsTo),
+    index("actors_by_status").on(t.status),
+    index("actors_by_reports_to").on(t.reports_to),
   ],
 );
 
-// ---- Tasks (was TaskRepository) ----
+/*
+ * All tasks in the system.
+ *
+ * task_id encodes the hierarchy — TASK-1 is a head-level task,
+ * TASK-1.1 is a manager-level task, TASK-1.1.1 is a worker-level task.
+ * Parent is derivable by stripping the last segment from task_id.
+ */
 export const tasks = sqliteTable(
   "tasks",
   {
-    id: text("id").primaryKey().$type<TaskId>(), // readable id
-    status: text("status").$type<TaskStatus>().notNull(),
+    task_id: text("task_id").$type<TaskId>().primaryKey(),
     title: text("title").notNull(),
+    status: text("status").$type<TaskStatus>().notNull(),
     description: text("description").notNull(),
-    acceptanceCriteria: json<string[]>("acceptance_criteria").notNull(),
-    referceTask: json<TaskId[] | null>("referce_task"),
+    acceptance_criteria: json<string[]>("acceptance_criteria").notNull(),
+    context_tasks: json<TaskId[]>("context_tasks"),
     dependencies: json<TaskId[]>("dependencies").notNull(),
-    assignedTo: text("assigned_to").$type<AgentId>(),
+    assigned_to: text("assigned_to").$type<ActorId>().references(() => actors.actor_id),
     priority: text("priority").$type<TaskPriority>().notNull(),
-    deadline: integer("deadline"),
-    budget: json<TaskBudget>("budget").notNull(),
     review: json<Review | null>("review"),
-    createdAt: integer("created_at").notNull(),
-    updatedAt: integer("updated_at").notNull(),
+    created_at: integer("created_at").notNull().default(now()),
+    updated_at: integer("updated_at").notNull().default(now()),
   },
   (t) => [
-    index("tasks_by_assigned_to").on(t.assignedTo),
+    index("tasks_by_assigned_to").on(t.assigned_to),
     index("tasks_by_status").on(t.status),
   ],
 );
 
-// ---- Per-agent working memory (was AgentMemoryRepository) ----
-export const agentMemories = sqliteTable("agent_memories", {
-  agentId: text("agent_id").primaryKey().$type<AgentId>(),
-  messages: json<ModelMessage[]>("messages").notNull(),
-  updatedAt: integer("updated_at").notNull(),
-});
-
-// ---- Long-term cross-task learnings (was MemoryWarehouseRepository) ----
-// The embedding lives in the `vec_memory` virtual table (db/client.ts), keyed by
-// this row's integer `rowid`. BM25/Qdrant recall is replaced by sqlite-vec KNN.
-export const memoryWarehouse = sqliteTable(
-  "memory_warehouse",
+/*
+ * Per-agent working memory.
+ *
+ * Stores the short-term conversation history for each agent scoped
+ * to a task. Pruning follows the role hierarchy:
+ *
+ *   worker/manager — pruned on task close after distillation into long_term_memory.
+ *   head/ceo       — pruned on task close after distillation into long_term_memory.
+ *   orchestrator   — never pruned; summarized periodically into long_term_memory.
+ *
+ * task_id is nullable to accommodate event-driven interactions
+ * (escalations, information requests) that have no formal task scope.
+ */
+export const agent_memories = sqliteTable(
+  "agent_memories",
   {
-    rowid: integer("rowid").primaryKey({ autoIncrement: true }),
-    memoryId: text("memory_id").notNull().$type<`memory_${number}`>(),
-    taskId: text("task_id").$type<TaskId>().notNull(),
-    agentId: text("agent_id").$type<AgentId>().notNull(),
-    outcome: text("outcome").$type<ClosedReason>().notNull(),
-    learning: json<Learning>("learning").notNull(),
-    messages: json<ModelMessage[]>("messages").notNull(),
-    createdAt: integer("created_at").notNull(),
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    agent_id: text("agent_id").$type<ActorId>().notNull().references(() => actors.actor_id),
+    task_id: text("task_id").$type<TaskId>().references(() => tasks.task_id),
+    message: json<ModelMessage>("message").notNull(),
+    created_at: integer("created_at").notNull().default(now()),
   },
   (t) => [
-    index("warehouse_by_memory_id").on(t.memoryId),
-    index("warehouse_by_agent").on(t.agentId),
-    index("warehouse_by_task").on(t.taskId),
+    index("agent_memories_by_agent_task").on(t.agent_id, t.task_id),
   ],
 );
 
-// ---- Editable role/department prompts (was PromptRepository) ----
-export const prompts = sqliteTable("prompts", {
-  key: text("key").primaryKey(), // "role:executive" | "department:research"
-  content: text("content").notNull(),
-  updatedAt: integer("updated_at").notNull(),
-});
+/*
+ * Long-term memory store for agent learnings.
+ *
+ * Each row captures the distilled outcome of a completed task —
+ * what happened, how it closed, and what was learned. Embeddings
+ * for KNN recall are stored in the vec_memory virtual table,
+ * keyed by this row's id.
+ */
+export const long_term_memory = sqliteTable(
+  "long_term_memory",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    task_id: text("task_id").$type<TaskId>().notNull().references(() => tasks.task_id),
+    closed_as: text("closed_as").$type<ClosedReason>().notNull(),
+    learning: json<Learning>("learning").notNull(),
+    created_at: integer("created_at").notNull().default(now()),
+  },
+  (t) => [
+    index("long_term_memory_by_task").on(t.task_id),
+  ],
+);
 
-// ---- Append-only event log: the observability projection ----
+/*
+ * Canonical log of all system events.
+ *
+ * Append-only record of everything that happens in the system —
+ * escalations, delegations, and information requests/responses.
+ * agent_inbox references these rows for inter-agent delivery tracking.
+ */
 export const events = sqliteTable(
   "events",
   {
-    seq: integer("seq").primaryKey({ autoIncrement: true }),
-    source: text("source").notNull(),
-    target: text("target").notNull(),
-    topic: text("topic").notNull(),
-    type: text("type").notNull(),
-    body: json<unknown>("body"),
-    correlationId: text("correlation_id"),
-    createdAt: integer("created_at")
-      .notNull()
-      .default(now()),
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    source: text("source").notNull().references(() => actors.actor_id),
+    type: text("type").$type<EventType>().notNull(),
+    payload: json<Event>("payload"),
+    parent_event_id: integer("parent_event_id").references((): any => events.id),
+    created_at: integer("created_at").notNull().default(now()),
   },
   (t) => [
-    index("events_by_target").on(t.target),
-    index("events_by_topic").on(t.topic),
+    index("events_by_source").on(t.source),
+    index("events_by_type").on(t.type),
   ],
 );
 
-// ---- Durable per-recipient work queue (replaces in-memory mailboxes) ----
-export const inbox = sqliteTable(
-  "inbox",
+/*
+ * Agent inbox — delivery queue for inter-agent events.
+ *
+ * One row per (event, target) pair. An event stays pending until
+ * the target agent consumes it, then marked consumed. The event
+ * payload lives in the events table; this table is pure routing.
+ */
+export const agent_inbox = sqliteTable(
+  "agent_inbox",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    target: text("target").notNull(),
-    event: json<unknown>("event").notNull(),
-    status: text("status").$type<"pending" | "consumed">().notNull(),
-    createdAt: integer("created_at").notNull(),
+    target: text("target").notNull().references(() => actors.actor_id),
+    source: text("source").notNull().references(() => actors.actor_id),
+    event_id: integer("event_id").notNull().references(() => events.id),
+    status: text("status").$type<"pending" | "consumed">().notNull().default("pending"),
+    updated_at: integer("updated_at").notNull().default(now()),
+    created_at: integer("created_at").notNull().default(now()),
   },
-  (t) => [index("inbox_by_target_status").on(t.target, t.status)],
+  (t) => [
+    index("inbox_by_target_status").on(t.target, t.status),
+  ],
 );
-
-// ---- Readable-id allocation (was the in-repo counter maps) ----
-export const counters = sqliteTable("counters", {
-  key: text("key").primaryKey(),
-  value: integer("value").notNull(),
-});

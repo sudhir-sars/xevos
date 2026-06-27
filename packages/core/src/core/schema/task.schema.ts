@@ -2,22 +2,21 @@ import { z } from "zod";
 
 import { agentIdSchema } from "./agent.schema";
 
+
+
+export type TaskId =
+  | `TASK-${number}`                          // head level
+  | `TASK-${number}.${number}`                // manager level
+  | `TASK-${number}.${number}.${number}`;     // worker level
+
 export const taskIdSchema = z
   .string()
-  .transform((value, ctx): `task_${number}` => {
-    if (!/^task_\d+$/.test(value)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Invalid task id",
-      });
+  .refine(
+    (value): value is TaskId =>
+      /^TASK-\d+(\.\d+){0,2}$/.test(value),
+    { message: "Invalid task id — expected TASK-1 up to TASK-1.1.1" }
+  );
 
-      return z.NEVER;
-    }
-
-    return value as `task_${number}`;
-  });
-
-export type TaskId = z.infer<typeof taskIdSchema>;
 
 export const taskStatusSchema = z.enum([
   "backlog",
@@ -45,7 +44,6 @@ export const reviewVerdictSchema = z.enum(["approved", "changes_requested"]);
 export type ReviewVerdict = z.infer<typeof reviewVerdictSchema>;
 
 export const reviewSchema = z.object({
-  reviewer: agentIdSchema,
   verdict: reviewVerdictSchema,
   notes: z.string(),
 });
@@ -53,8 +51,7 @@ export const reviewSchema = z.object({
 export type Review = z.infer<typeof reviewSchema>;
 
 export const taskBudgetSchema = z.object({
-  maxTokens: z.number().int().nonnegative(),
-  maxUsd: z.number().nonnegative(),
+  max_tokens: z.number().int().nonnegative(),
 });
 
 export type TaskBudget = z.infer<typeof taskBudgetSchema>;

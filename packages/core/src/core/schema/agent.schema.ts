@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const roleSchema = z.enum(["executive", "head", "manager", "worker"]);
+export const roleSchema = z.enum(["head", "manager", "worker"]);
 
 export type Role = z.infer<typeof roleSchema>;
 
@@ -16,17 +16,17 @@ export const departmentSchema = z.enum([
 
 export type Department = z.infer<typeof departmentSchema>;
 
-export const agentStatusSchema = z.enum(["active", "suspended"]);
+export const agentStatusSchema = z.enum(["active", "suspended","under_maintenance"]);
 
 export type AgentStatus = z.infer<typeof agentStatusSchema>;
 
 export const roleDefinitionIdSchema = z
   .string()
   .refine(
-    (value): value is `${Role}_${Department}` =>
+    (value): value is `${Role}-${Department}` =>
       roleSchema.options.some((role) =>
         departmentSchema.options.some(
-          (department) => value === `${role}_${department}`,
+          (department) => value === `${role}-${department}`,
         ),
       ),
     { message: "Invalid role definition id" },
@@ -38,8 +38,8 @@ export type PrincipalId = z.infer<typeof principalIdSchema>;
 export type RoleDefinitionId = z.infer<typeof roleDefinitionIdSchema>;
 
 export const agentIdSchema = z.string().refine(
-  (value): value is `${Role}_${Department}_${number}` => {
-    const match = value.match(/_(\d+)$/);
+  (value): value is `${Role}-${Department}-${number}` => {
+    const match = value.match(/-(\d+)$/);
 
     if (!match) return false;
 
@@ -47,7 +47,7 @@ export const agentIdSchema = z.string().refine(
 
     return roleSchema.options.some((role) =>
       departmentSchema.options.some(
-        (department) => prefix === `${role}_${department}`,
+        (department) => prefix === `${role}-${department}`,
       ),
     );
   },
@@ -55,6 +55,17 @@ export const agentIdSchema = z.string().refine(
 );
 
 export type AgentId = z.infer<typeof agentIdSchema>;
+
+export const ceoIdSchema = z.literal("ceo");
+export type CeoId = z.infer<typeof ceoIdSchema>;
+
+export const supervisorIdSchema = z.custom<`orchestrator-${string}`>(
+  (val) => typeof val === "string" && val.startsWith("orchestrator-")
+);
+export type supervisorId = z.infer<typeof supervisorIdSchema>;
+
+export const actorIdSchema = z.union([agentIdSchema, ceoIdSchema, supervisorIdSchema]);
+export type ActorId = z.infer<typeof actorIdSchema>;
 
 export const reportTargetIdSchema = z.union([agentIdSchema, principalIdSchema]);
 export type ReportTargetId = z.infer<typeof reportTargetIdSchema>;
