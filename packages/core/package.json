@@ -22,12 +22,12 @@
   "license": "MIT",
   "dependencies": {
     "@ai-sdk/google": "^3.0.83",
+    "@xevos/platforms": "workspace:*",
     "ai": "^6.0.208",
     "better-sqlite3": "^12.11.1",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "exa-js": "^2.15.0",
-    "puppeteer-core": "^25.2.1",
     "sqlite-vec": "^0.1.9",
     "ws": "^8.18.0",
     "zod": "^4.4.3"

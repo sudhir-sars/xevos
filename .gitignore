@@ -36,3 +36,7 @@ Thumbs.db
 *.db
 *.db-wal
 *.db-shm
+
+# Platform session cookies — LIVE CREDENTIALS, never commit
+storage/sessions/
+**/storage/sessions/

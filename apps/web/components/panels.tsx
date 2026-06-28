@@ -78,6 +78,8 @@ const TOPIC_STYLES: Record<Event["topic"], string> = {
   task: "bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
   observation:
     "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+  platform:
+    "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-300",
 };
 
 function Pill({
