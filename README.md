@@ -1,5 +1,12 @@
 # xevos
 
+> ⚠️ **Project status: Archived (June 2026).** Active development has stopped. xevos
+> is paused pending favorable cost and platform conditions — see
+> **[PROJECT-CLOSURE.md](./PROJECT-CLOSURE.md)** for the full rationale (platform-automation
+> legal risk, official-API economics, and the inference-cost structure of the hierarchy),
+> along with the explicit conditions under which it would be revived. The rest of this
+> README describes the runtime as it stood at archival.
+
 > **OrgOS** — a runtime for building self-operating, AI-powered companies.
 
 `xevos` is a TypeScript implementation of the **Autonomous Agent Organization (AAO)**
